@@ -19,14 +19,14 @@ export const DynamoTableDataInfo = (
             <Typography variant={'h1'} gutterBottom style={{marginTop: 12}}>
                 Table: <code>{activeTable}</code>
             </Typography>
-            <Typography variant={'h6'} component={'h2'} gutterBottom style={{lineHeight: 1}}>
+            {tableSchema?.Table?.TableName ? <Typography variant={'h6'} component={'h2'} gutterBottom style={{lineHeight: 1}}>
                 <Typography variant={'body2'} component={'span'} style={{lineHeight: 1}}>
                     Table name in schema:
                 </Typography>
                 <span style={{fontWeight: 'bold', display: 'block'}}>
-                        {tableSchema.Table.TableName}
-                    </span>
-            </Typography>
+                    {tableSchema.Table.TableName}
+                </span>
+            </Typography> : null}
             {tableSchema && tableSchema['@metadata'] ?
                 <Typography variant={'h6'} component={'h2'} gutterBottom style={{lineHeight: 1}}>
                     <Typography variant={'body2'} component={'span'} style={{lineHeight: 1.25}}>

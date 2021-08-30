@@ -70,7 +70,7 @@ export const Visualizer = (
 
     const updateTables = React.useCallback((table: any | ((table?: any) => any), id: string | undefined) => {
         setTables((tables: any) => {
-            let tablesData = [...tables.data]
+            let tablesData = [...(tables.data || [])]
             const index = tablesData.findIndex(t => t.id === id)
             if(index !== -1) {
                 table = typeof table === 'function' ? table(tablesData[index]) : table
@@ -94,10 +94,12 @@ export const Visualizer = (
         })
     }, [setTables])
 
+    const tablesData = tables?.data || []
+
     return <Switch>
         <Route path="/" exact>
             <DynamoTables
-                tables={tables.data}
+                tables={tablesData}
                 updateTables={updateTables}
                 activeTable={activeTable}
             />
@@ -105,7 +107,7 @@ export const Visualizer = (
         <Route path="/table/:tableId/:tableAction?"
                render={({match}) =>
                    <DynamoTablePage
-                       tables={tables.data}
+                       tables={tablesData}
                        updateTables={updateTables}
                        activeTable={activeTable}
                        setActiveTable={setActiveTable}
