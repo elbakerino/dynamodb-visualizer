@@ -19,7 +19,7 @@ const tmpDir = path.resolve(__dirname, 'tmp')
 const actionTargets = {
     'dynamodb-visualizer': deployApp(
         'dynamodb-visualizer', 'php',
-        () => packIntoTmp(path.join(rootDir, 'dynamodb-visualizer', 'build'), tmpDir), [
+        () => packIntoTmp(path.join(rootDir, 'build'), tmpDir), [
             'host_id=clients-shared',
         ],
     ),
