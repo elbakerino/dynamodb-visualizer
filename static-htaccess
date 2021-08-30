@@ -1,0 +1,94 @@
+<IfModule mod_expires.c>
+    ExpiresActive On
+
+    AddType application/font-sfnt            otf ttf
+    AddType application/font-woff            woff
+    AddType application/font-woff2           woff2
+    AddType application/vnd.ms-fontobject    eot
+
+    ExpiresByType application/font-woff "access 1 year"
+    ExpiresByType application/font-woff2 "access 1 year"
+    ExpiresByType application/font-sfnt "access 1 year"
+    ExpiresByType application/vnd.ms-fontobject "access 1 year"
+
+    # Images
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType image/x-icon "access plus 1 year"
+
+    # Video
+    ExpiresByType video/mp4 "access plus 1 year"
+    ExpiresByType video/mpeg "access plus 1 year"
+
+    # CSS, JavaScript
+    ExpiresByType text/css "access plus 1 week"
+    ExpiresByType text/javascript "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+
+    # Others
+    #ExpiresByType application/pdf "access plus 1 month"
+    #ExpiresByType application/x-shockwave-flash "access plus 1 month"
+</IfModule>
+
+
+# BROWSER CACHING USING CACHE-CONTROL HEADERS
+<IfModule mod_headers.c>
+    Header set Server "bserve"
+    # One year for image and video files
+    <FilesMatch ".(flv|gif|ico|jpg|jpeg|mp4|mpeg|png|svg|swf|webp)$">
+        Header unset ETag
+        FileETag None
+        Header set Cache-Control "max-age=31536000, public"
+    </FilesMatch>
+    <FilesMatch "\.(svg)$">
+        Header unset ETag
+        FileETag None
+        Header set Cache-Control "max-age=604800, public"
+    </FilesMatch>
+
+    <FilesMatch "\.(js)">
+        Header unset ETag
+        FileETag None
+        Header set Cache-Control "max-age=604800, public"
+    </FilesMatch>
+
+    <FilesMatch "\.(woff|woff2|eot|ttf)$">
+        Header unset ETag
+        FileETag None
+        Header set Cache-Control "max-age=604800, public"
+    </FilesMatch>
+</IfModule>
+
+
+<IfModule mod_rewrite.c>
+    # only with this, GET parameters will be functional
+    Options +FollowSymlinks
+    Options -MultiViews
+
+    # everything should be utf-8
+    AddCharset utf-8 .html .php .css .js
+
+    RewriteEngine On
+
+    #RewriteRule ^index\.html$ / [NC,R,L]
+
+    # The following rule tells Apache that if the requested filename
+    # exists, simply serve it.
+    RewriteCond %{REQUEST_FILENAME} -s [OR]
+    RewriteCond %{REQUEST_FILENAME} -l [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^.*$ - [NC,L]
+
+    # The following rewrites all other queries to index.php. The
+    # condition ensures that if you are using Apache aliases to do
+    # mass virtual hosting, the base path will be prepended to
+    # allow proper resolution of the index.php file; it will work
+    # in non-aliased environments as well, providing a safe, one-size
+    # fits all solution.
+    RewriteCond %{REQUEST_URI}::$1 ^(/.+)(.+)::\2$
+    RewriteRule ^(.*) - [E=BASE:%1]
+    RewriteRule ^(.*)$ %{ENV:BASE}index.html [NC,L]
+</IfModule>
