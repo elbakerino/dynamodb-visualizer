@@ -257,7 +257,9 @@ const DataTableCell = (
         }}
         onClick={() => setShowAll(o => !o)}
     >
-        {sk[ik] ? val : <span style={{opacity: 0.5}}>-</span>}
+        {sk[ik] ?
+            typeof val === 'object' ? JSON.stringify(val) : val
+            : <span style={{opacity: 0.5}}>-</span>}
     </TableCell>
 }
 
