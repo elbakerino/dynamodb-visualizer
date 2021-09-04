@@ -1,13 +1,15 @@
-import { Box, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, useTheme } from '@material-ui/core'
+import { Box, IconButton, LinearProgress, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, useTheme } from '@material-ui/core'
 import React, { memo } from 'react'
 import { parseExampleData } from './parseExampleData'
 import { ToggleButton, ToggleButtonGroup } from '@material-ui/lab'
 import IcConfig from '@material-ui/icons/Settings'
+import IcScan from '@material-ui/icons/SearchOutlined'
 import IcVisibilityOff from '@material-ui/icons/VisibilityOff'
 import { DynamoTableDataConfig } from './DynamoTableDataConfig'
 import { DynamoTableDataInfo } from './DynamoTableDataInfo'
 import { DynamoTableDataSecondaryKeys } from './DynamoTableDataSecondaryKeys'
 import { useHistory } from 'react-router-dom'
+import Typography from '@material-ui/core/Typography'
 
 export interface DynamoDbIndex {
     AttributeName: string
@@ -31,6 +33,7 @@ const DynamoTableDataBase = (
     }
 ) => {
     const [openId, setOpenId] = React.useState<string | undefined>('viz')
+    const [scanEndpoint, setScanEndpoint] = React.useState<string>('')
     const [openConfig, setOpenConfig] = React.useState<boolean>(false)
     const [parsing, setParsing] = React.useState<number>(0)
     const [parsedData, setParsedData] = React.useState<ParsedDataResult | undefined>(undefined)
@@ -47,9 +50,11 @@ const DynamoTableDataBase = (
         : {}
 
     const [activeIndex, setActiveIndex] = React.useState<string | undefined>(searchParams?.key_index)
+    const [scanProgress, setScanProgress] = React.useState<number>(0)
+    const [scanData, setScanData] = React.useState<any | undefined>(undefined)
     const table = tables.find(t => t.id === activeTable)
     const tableSchema = table?.schema
-    const tableData = table?.exampleData
+    const tableData = scanData || table?.exampleData
     const tableSchemaAttr = table?.schema?.Table?.AttributeDefinitions
     const tableSchemaKeyIndex = table?.schema?.Table?.KeySchema
     const tableSchemaSecIndex = table?.schema?.Table?.GlobalSecondaryIndexes
@@ -60,6 +65,32 @@ const DynamoTableDataBase = (
             search: ix ? '?key_index=' + ix : ''
         })
     }, [setActiveIndex, history])
+
+    const doScan = React.useCallback((scanUrl: string, tableId: string) => {
+        setScanProgress(1)
+        if(scanUrl.indexOf('?') === -1) {
+            scanUrl += '?table=' + tableId
+        } else {
+            scanUrl += '&table=' + tableId
+        }
+        fetch(scanUrl, {method: 'GET'})
+            .then(async(r) => ({
+                status: r.status,
+                json: await r.json(),
+            }))
+            .then(j => {
+                if(j.status === 200) {
+                    setScanData(j.json)
+                    setScanProgress(2)
+                } else {
+                    setScanProgress(3)
+                }
+            })
+            .catch((e) => {
+                setScanProgress(3)
+                console.error('scan error:', e)
+            })
+    }, [setScanData, setScanProgress])
 
     let index = tableSchemaKeyIndex
     if(activeIndex) {
@@ -115,7 +146,10 @@ const DynamoTableDataBase = (
 
     return <>
         <Box m={2}>
-            <Box style={{display: 'flex'}}>
+            <Box style={{
+                display: 'flex',
+                overflow: 'auto',
+            }}>
                 <ToggleButtonGroup
                     value={openId}
                     exclusive
@@ -126,10 +160,10 @@ const DynamoTableDataBase = (
                             setOpenId(openId || 'config')
                     }
                 >
-                    <ToggleButton value="info">
+                    <ToggleButton value="info" style={{whiteSpace: 'nowrap'}}>
                         Show Info
                     </ToggleButton>
-                    <ToggleButton value="viz">
+                    <ToggleButton value="viz" style={{whiteSpace: 'nowrap'}}>
                         Open Table
                     </ToggleButton>
                 </ToggleButtonGroup>
@@ -138,24 +172,56 @@ const DynamoTableDataBase = (
                         variant={'outlined'}
                         style={{
                             marginLeft: 6,
+                            marginRight: 6,
                             background: typeof activeIndex === 'undefined' ? undefined : 'transparent',
                             fontWeight: typeof activeIndex === 'undefined' ? 'bold' : 'normal',
                             cursor: 'pointer',
-                            display: 'inline-block'
+                            display: 'inline-flex'
                         }}
                         tabIndex={-1}
                         onClick={() => changeActiveIndex(undefined)}
                     >
-                        <Box my={1} mx={1}>
+                        <Box my={'auto'} mx={1} style={{whiteSpace: 'nowrap'}}>
                             primary index
                         </Box>
                     </Paper>
+
+                    <Box mt={'auto'} mr={1} ml={'auto'} mb={'auto'} style={{display: 'flex', flexDirection: 'column', position: 'relative'}}>
+                        <Box style={{display: 'flex'}}>
+                            <TextField
+                                label={'Scan Endpoint'}
+                                value={scanEndpoint}
+                                onChange={(e) => setScanEndpoint(e.target.value)}
+                                size={'small'}
+                                fullWidth
+                                style={{minWidth: 350}}
+                            />
+                            <IconButton
+                                edge="start" color={'inherit'} aria-label="config"
+                                disabled={
+                                    !scanEndpoint || !tableSchema?.Table?.TableName || scanProgress === 1
+                                }
+                                onClick={() => scanEndpoint && tableSchema?.Table?.TableName ? doScan(scanEndpoint, tableSchema?.Table?.TableName) : null}
+                                style={{
+                                    margin: 'auto 0',
+                                    padding: 6,
+                                }}
+                            >
+                                <IcScan color={scanProgress === 3 ? 'error' : 'inherit'}/>
+                            </IconButton>
+                        </Box>
+
+                        {!tableSchema?.Table?.TableName ?
+                            <Typography variant={'caption'} color={'error'}>tableSchema is missing `Table.TableName`</Typography> : null}
+
+                        {scanProgress === 1 ? <LinearProgress style={{position: 'absolute', bottom: 0, left: 0, right: 0}}/> : null}
+                    </Box>
 
                     <IconButton
                         edge="start" color="inherit" aria-label="config"
                         onClick={() => setOpenConfig(o => !o)}
                         style={{
-                            margin: 'auto 0 auto auto',
+                            margin: 'auto 0',
                             padding: 6,
                         }}
                     >
@@ -237,11 +303,12 @@ const DataTableBase = (
 const DataTable = memo(DataTableBase)
 
 const DataTableCell = (
-    {sk, ik}:
-        {
-            sk: any
-            ik: string
-        }
+    {
+        sk, ik
+    }: {
+        sk: any
+        ik: string
+    }
 ) => {
     const [showAll, setShowAll] = React.useState<boolean>(false)
     const val = sk[ik] ? Object.values(sk[ik])[0] as string : undefined
