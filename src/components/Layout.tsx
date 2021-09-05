@@ -2,8 +2,10 @@ import React, { memo } from 'react'
 import { Link, useHistory } from 'react-router-dom'
 import { AppBar, Box, IconButton, Toolbar, Typography } from '@material-ui/core'
 import IcHome from '@material-ui/icons/Home'
+import IcGitHub from '@material-ui/icons/GitHub'
 import IcTheme from '@material-ui/icons/InvertColors'
-import { ToggleButton, ToggleButtonGroup } from '@material-ui/lab'
+import ToggleButton from '@material-ui/lab/ToggleButton'
+import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup'
 
 const LayoutBase: React.ComponentType<React.PropsWithChildren<{
     activeTable: string | undefined
@@ -54,8 +56,16 @@ const LayoutBase: React.ComponentType<React.PropsWithChildren<{
 
                 <IconButton
                     edge="start" color="inherit" aria-label="menu"
-                    onClick={() => setThemeId((id: 'dark' | 'light') => id === 'dark' ? 'light' : 'dark')}
+                    href={'https://github.com/elbakerino/dynamodb-visualizer'}
+                    //onClick={() => history.push('https://github.com/elbakerino/dynamodb-visualizer')}
                     style={{marginLeft: 'auto'}}
+                >
+                    <IcGitHub/>
+                </IconButton>
+                <IconButton
+                    edge="start" color="inherit" aria-label="menu"
+                    onClick={() => setThemeId((id: 'dark' | 'light') => id === 'dark' ? 'light' : 'dark')}
+                    style={{marginLeft: 3}}
                 >
                     <IcTheme/>
                 </IconButton>

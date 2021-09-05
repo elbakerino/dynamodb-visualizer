@@ -1,25 +1,35 @@
 import React from 'react'
-import { Checkbox, Dialog, DialogContent, List, ListItem, ListItemIcon, ListItemText } from '@material-ui/core'
+import { Button, Checkbox, Dialog, DialogActions, DialogContent, List, ListItem, ListItemIcon, ListItemText, TextField } from '@material-ui/core'
 import Typography from '@material-ui/core/Typography'
-import { ParsedDataResult } from './DynamoTableData'
+import { DynamoPresets, ParsedDataResult } from './DynamoTableData'
 
 export const DynamoTableDataConfig = (
     {
         arrayKeys, onClose, open,
         index, displayKeys, toggleDisplayKeys,
-    }:
-        {
-            arrayKeys: string[] | undefined
-            displayKeys: string[] | undefined
-            open: boolean
-            onClose: () => void
-            index: any | undefined
-            setParsedData: React.Dispatch<React.SetStateAction<ParsedDataResult | undefined>>
-            toggleDisplayKeys: (key: string) => void
-        }
+        savePreset,
+        presets, activePreset,
+        activeTable,
+    }: {
+        arrayKeys: string[] | undefined
+        displayKeys: string[] | undefined
+        activePreset: string | undefined
+        activeTable: string | undefined
+        open: boolean
+        onClose: () => void
+        index: any | undefined
+        setParsedData: React.Dispatch<React.SetStateAction<ParsedDataResult | undefined>>
+        toggleDisplayKeys: (key: string) => void
+        presets: DynamoPresets
+        savePreset: (table: string, name: string, displayKeys: string[]) => void
+    }
 ) => {
+    const [name, setName] = React.useState(activePreset || '')
     const primKey = index ? index[0] : undefined
     const sortKey = index ? index[1] : undefined
+    React.useEffect(() => {
+        setName(activePreset || '')
+    }, [activePreset, setName])
 
     return <Dialog
         open={open} onClose={onClose}
@@ -71,5 +81,25 @@ export const DynamoTableDataConfig = (
                 </ListItem>)}
             </List>
         </DialogContent>
+        <DialogActions>
+            <label>
+                <span style={{verticalAlign: 'middle'}}>Preset Name:</span>
+                <TextField
+                    style={{marginLeft: 4}}
+                    size={'small'}
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                />
+            </label>
+            <Button
+                disabled={!name.trim() || !displayKeys}
+                onClick={() => {
+                    if(displayKeys && activeTable) {
+                        savePreset(activeTable, name, displayKeys)
+                        onClose()
+                    }
+                }}
+            >{presets.find(p => p.name === name) ? 'Update' : 'Save as'} preset</Button>
+        </DialogActions>
     </Dialog>
 }

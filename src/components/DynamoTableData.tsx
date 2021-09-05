@@ -1,15 +1,24 @@
-import { Box, IconButton, LinearProgress, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, useTheme } from '@material-ui/core'
+import { Box, FormControl, IconButton, InputLabel, LinearProgress, MenuItem, Paper, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, useTheme } from '@material-ui/core'
 import React, { memo } from 'react'
 import { parseExampleData } from './parseExampleData'
 import { ToggleButton, ToggleButtonGroup } from '@material-ui/lab'
 import IcConfig from '@material-ui/icons/Settings'
 import IcScan from '@material-ui/icons/SearchOutlined'
+import IcClear from '@material-ui/icons/Clear'
 import IcVisibilityOff from '@material-ui/icons/VisibilityOff'
 import { DynamoTableDataConfig } from './DynamoTableDataConfig'
 import { DynamoTableDataInfo } from './DynamoTableDataInfo'
 import { DynamoTableDataSecondaryKeys } from './DynamoTableDataSecondaryKeys'
-import { useHistory } from 'react-router-dom'
+import { useHistory, useLocation } from 'react-router-dom'
 import Typography from '@material-ui/core/Typography'
+import { getLocalPresets, setLocalPreset } from './Visualizer'
+
+export interface DynamoPreset {
+    name: string
+    displayKeys: string[]
+}
+
+export type DynamoPresets = DynamoPreset[]
 
 export interface DynamoDbIndex {
     AttributeName: string
@@ -34,12 +43,14 @@ const DynamoTableDataBase = (
 ) => {
     const [openId, setOpenId] = React.useState<string | undefined>('viz')
     const [scanEndpoint, setScanEndpoint] = React.useState<string>('')
+    const [presets, setPresets] = React.useState<DynamoPresets>(activeTable ? getLocalPresets(activeTable) : [])
     const [openConfig, setOpenConfig] = React.useState<boolean>(false)
     const [parsing, setParsing] = React.useState<number>(0)
     const [parsedData, setParsedData] = React.useState<ParsedDataResult | undefined>(undefined)
     const history = useHistory()
-    const searchParams: { [k: string]: string } = history.location.search ?
-        history.location.search
+    const location = useLocation()
+    const searchParams: { [k: string]: string } = location.search ?
+        location.search
             .substr(1)
             .split('&')
             .reduce((a: { [k: string]: string }, b) => {
@@ -58,6 +69,26 @@ const DynamoTableDataBase = (
     const tableSchemaAttr = table?.schema?.Table?.AttributeDefinitions
     const tableSchemaKeyIndex = table?.schema?.Table?.KeySchema
     const tableSchemaSecIndex = table?.schema?.Table?.GlobalSecondaryIndexes
+    const paramPresetTmp = searchParams?.preset ? decodeURIComponent(searchParams?.preset) : undefined
+    const presetExists = paramPresetTmp && presets.find(p => p.name === paramPresetTmp)
+    const paramPreset = presetExists ? paramPresetTmp : undefined
+
+    const savePreset: (table: string, name: string, displayKeys: string[]) => void = React.useCallback((table, name, displayKeys) => {
+        setPresets(presets => {
+            const ps = [...presets]
+            const i = ps.findIndex(p => p.name === name)
+            if(i === -1) {
+                ps.push({name, displayKeys})
+            } else {
+                ps.splice(i, 1, {name, displayKeys})
+            }
+            setLocalPreset(table, ps)
+            return ps
+        })
+        history.push({
+            search: '?preset=' + encodeURIComponent(name)
+        })
+    }, [setPresets, history])
 
     const changeActiveIndex = React.useCallback((ix: string | undefined) => {
         setActiveIndex(ix)
@@ -97,6 +128,25 @@ const DynamoTableDataBase = (
         // todo find and overwrite secondary
         index = tableSchemaSecIndex?.find((index: any) => index.IndexName === activeIndex)?.KeySchema
     }
+
+    React.useEffect(() => {
+        if(activeTable) {
+            setPresets(getLocalPresets(activeTable))
+        } else {
+            setPresets([])
+        }
+    }, [setPresets, activeTable])
+
+    React.useEffect(() => {
+        const preset = presets.find(p => p.name === paramPreset)
+        setParsedData((pd) =>
+            pd ? {
+                ...pd,
+                displayKeys: preset?.displayKeys ? preset.displayKeys : pd.allKeys
+            } : pd
+        )
+    }, [presets, paramPreset, setParsedData])
+
     React.useEffect(() => {
         if(!tableData?.Items) {
             setParsedData(undefined)
@@ -186,7 +236,47 @@ const DynamoTableDataBase = (
                         </Box>
                     </Paper>
 
-                    <Box mt={'auto'} mr={1} ml={'auto'} mb={'auto'} style={{display: 'flex', flexDirection: 'column', position: 'relative'}}>
+                    {presets.length > 0 ? <Box
+                        mt={'auto'} mr={1} ml={'auto'} mb={'auto'}
+                        style={{display: 'flex', position: 'relative'}}
+                    >
+                        <FormControl fullWidth size={'small'} style={{minWidth: 120, marginRight: 1}}>
+                            <InputLabel id={'bsv--preset'}>Preset</InputLabel>
+                            <Select
+                                labelId={'bsv--preset'}
+                                id={'bsv--preset-val'}
+                                value={paramPreset || ''}
+                                onChange={(event: React.ChangeEvent<{ value: unknown }>) =>
+                                    history.push({
+                                        search: '?preset=' + encodeURIComponent(event.target.value as string) +
+                                            (activeIndex ? '&key_index=' + activeIndex : '')
+                                        ,
+                                    })
+                                }
+                            >
+                                {presets.map(p => <MenuItem key={p.name} value={p.name}>{p.name}</MenuItem>)}
+                            </Select>
+                        </FormControl>
+                        {paramPreset ? <IconButton
+                            edge="start" color={'inherit'} aria-label="config"
+                            onClick={() => history.push({
+                                search: '',
+                            })}
+                            style={{
+                                margin: 'auto 0',
+                                padding: 6,
+                            }}
+                        >
+                            <IcClear/>
+                        </IconButton> : null}
+                    </Box> : null}
+
+                    <Box
+                        mt={'auto'} mr={1}
+                        ml={presets.length > 0 ? 1 : 'auto'}
+                        mb={'auto'}
+                        style={{display: 'flex', flexDirection: 'column', position: 'relative'}}
+                    >
                         <Box style={{display: 'flex'}}>
                             <TextField
                                 label={'Scan Endpoint'}
@@ -237,6 +327,10 @@ const DynamoTableDataBase = (
                 index={index}
                 setParsedData={setParsedData}
                 toggleDisplayKeys={toggleDisplayKeys}
+                savePreset={savePreset}
+                activeTable={activeTable}
+                activePreset={paramPreset}
+                presets={presets}
             /> : null}
 
             {openId === 'info' ? <DynamoTableDataInfo

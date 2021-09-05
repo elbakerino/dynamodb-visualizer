@@ -2,6 +2,7 @@ import React from 'react'
 import { Route, Switch } from 'react-router-dom'
 import { DynamoTables } from './DynamoTables'
 import { DynamoTablePage } from './DynamoTablePage'
+import { DynamoPresets } from './DynamoTableData'
 
 const getLocal = () => {
     const entryIndex = window.localStorage.getItem('dyndb-preview--tables-index')
@@ -16,7 +17,7 @@ const getLocal = () => {
         try {
             parsedEntry.index = JSON.parse(entryIndex)
         } catch(e) {
-            // noop
+            console.log('error json data for tables-index', e)
         }
     }
     if(parsedEntry.index) {
@@ -31,8 +32,7 @@ const getLocal = () => {
                     parsedEntry.index?.splice(i, 1)
                 }
             } catch(e) {
-                // noop
-                console.log('error json data', e)
+                console.log('error json data for table__' + tableId, e)
             }
         })
     }
@@ -52,6 +52,23 @@ const setLocalIndex = (updater: (tables: string[] | undefined) => string[]) => {
         next = updater([])
     }
     window.localStorage.setItem('dyndb-preview--tables-index', JSON.stringify(next))
+}
+
+export const setLocalPreset = (table: string, presets: DynamoPresets) => {
+    window.localStorage.setItem('dyndb-preview--table_presets__' + table, JSON.stringify(presets))
+}
+
+export const getLocalPresets = (tableId: string): DynamoPresets => {
+    const entry = window.localStorage.getItem('dyndb-preview--table_presets__' + tableId)
+    let parsed: DynamoPresets = []
+    if(entry) {
+        try {
+            parsed = JSON.parse(entry)
+        } catch(e) {
+            console.log('error json data for table_presets__' + tableId, e)
+        }
+    }
+    return parsed
 }
 
 export const Visualizer = (
