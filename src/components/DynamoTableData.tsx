@@ -5,13 +5,17 @@ import { ToggleButton, ToggleButtonGroup } from '@material-ui/lab'
 import IcConfig from '@material-ui/icons/Settings'
 import IcScan from '@material-ui/icons/SearchOutlined'
 import IcClear from '@material-ui/icons/Clear'
+import IcColorize from '@material-ui/icons/ColorLens'
 import IcVisibilityOff from '@material-ui/icons/VisibilityOff'
+import IcFixedWidth from '@material-ui/icons/GridOff'
+import IcFlexWidth from '@material-ui/icons/GridOn'
 import { DynamoTableDataConfig } from './DynamoTableDataConfig'
 import { DynamoTableDataInfo } from './DynamoTableDataInfo'
 import { DynamoTableDataSecondaryKeys } from './DynamoTableDataSecondaryKeys'
 import { useHistory, useLocation } from 'react-router-dom'
 import Typography from '@material-ui/core/Typography'
 import { getLocalPresets, setLocalPreset } from './Visualizer'
+import { ColorizeRule, ColorizeRulesetType, DynamoTableSidebar } from './DynamoTableSidebar'
 
 export interface DynamoPreset {
     name: string
@@ -42,9 +46,12 @@ const DynamoTableDataBase = (
     }
 ) => {
     const [openId, setOpenId] = React.useState<string | undefined>('viz')
+    const [ruleSet, setRuleset] = React.useState<ColorizeRulesetType>({pk: [], sk: []})
+    const [openSidebar, setOpenSidebar] = React.useState<string | undefined>(undefined)
     const [scanEndpoint, setScanEndpoint] = React.useState<string>('')
     const [presets, setPresets] = React.useState<DynamoPresets>(activeTable ? getLocalPresets(activeTable) : [])
     const [openConfig, setOpenConfig] = React.useState<boolean>(false)
+    const [fixedWidth, setFixedWidth] = React.useState<boolean>(false)
     const [parsing, setParsing] = React.useState<number>(0)
     const [parsedData, setParsedData] = React.useState<ParsedDataResult | undefined>(undefined)
     const history = useHistory()
@@ -317,6 +324,19 @@ const DynamoTableDataBase = (
                     >
                         <IcConfig/>
                     </IconButton>
+
+                    <IconButton
+                        edge="start" color="inherit" aria-label="config"
+                        onClick={() => setFixedWidth(o => !o)}
+                        style={{
+                            margin: 'auto 0',
+                            padding: 6,
+                        }}
+                    >
+                        {fixedWidth ?
+                            <IcFixedWidth/> :
+                            <IcFlexWidth/>}
+                    </IconButton>
                 </> : null}
             </Box>
 
@@ -348,19 +368,30 @@ const DynamoTableDataBase = (
                 setActiveIndex={changeActiveIndex}
             />
         </Box>
+        <Box style={{display: 'flex', overflow: 'auto'}}>
+            {openId === 'viz' ?
+                parsing === 0 ? <Box m={2}>nothing parsed</Box> :
+                    parsing === 1 || (
+                        parsing === 2 &&
+                        !(parsedData?.sorted && index && index === parsedData.index)
+                    ) ? <Box m={2}>parsing...</Box> :
+                        <DataTable
+                            toggleDisplayKeys={toggleDisplayKeys}
+                            parsedData={parsedData}
+                            index={index}
+                            setOpenSidebar={setOpenSidebar}
+                            colorize={ruleSet}
+                            fixedWidth={fixedWidth}
+                        /> :
+                null}
 
-        {openId === 'viz' ?
-            parsing === 0 ? <Box m={2}>nothing parsed</Box> :
-                parsing === 1 || (
-                    parsing === 2 &&
-                    !(parsedData?.sorted && index && index === parsedData.index)
-                ) ? <Box m={2}>parsing...</Box> :
-                    <DataTable
-                        toggleDisplayKeys={toggleDisplayKeys}
-                        parsedData={parsedData}
-                        index={index}
-                    /> :
-            null}
+            {openSidebar ? <DynamoTableSidebar
+                openId={openSidebar}
+                ruleSet={ruleSet}
+                setOpenSidebar={setOpenSidebar}
+                setRuleset={setRuleset}
+            /> : null}
+        </Box>
     </>
 }
 
@@ -368,33 +399,95 @@ const DataTableBase = (
     {
         parsedData, index,
         toggleDisplayKeys,
+        setOpenSidebar,
+        colorize,
+        fixedWidth,
     }: {
         parsedData: any
         index: any[]
         toggleDisplayKeys: (key: string) => void
+        setOpenSidebar: (key: string | ((key: string | undefined) => string | undefined)) => void
+        colorize: ColorizeRulesetType
+        fixedWidth: boolean
     }
 ) => {
     return <TableContainer style={{maxHeight: '100vh'}}>
-        <Table size={'small'}>
-            <DataTableHead parsedData={parsedData} index={index} toggleDisplayKeys={toggleDisplayKeys}/>
+        <Table size={'small'} style={{tableLayout: fixedWidth ? 'fixed' : undefined}}>
+            <DataTableHead parsedData={parsedData} index={index} toggleDisplayKeys={toggleDisplayKeys} setOpenSidebar={setOpenSidebar}/>
 
             <TableBody>
                 {Object.keys(parsedData.sorted).map((k) => <React.Fragment key={k}>
                     <TableRow>
-                        <TableCell style={{whiteSpace: 'nowrap'}} rowSpan={(parsedData.sorted[k]?.length || 0) + 1}>{k}</TableCell>
+                        <TableCell
+                            style={{
+                                whiteSpace: 'nowrap',
+                                textOverflow: 'ellipsis',
+                                overflow: 'hidden',
+                                ...(getColor(k, colorize.pk) ? {background: getColor(k, colorize.pk)} : {}),
+                            }}
+                            rowSpan={(parsedData.sorted[k]?.length || 0) + 1}
+                        >{k}</TableCell>
                     </TableRow>
-                    {parsedData.sorted[k]?.map((sk: any, i: number) => <TableRow key={i}>
-                        <TableCell style={{whiteSpace: 'nowrap'}}>{Object.values(sk[index[1].AttributeName])[0] as string}</TableCell>
-                        {parsedData.displayKeys.map((ik: string) =>
-                            <DataTableCell key={ik} ik={ik} sk={sk}/>
-                        )}
-                    </TableRow>)}
+                    {parsedData.sorted[k]?.map((sk: any, i: number) => {
+                        const skVal = Object.values(sk[index[1].AttributeName])[0] as string
+                        const skColor = getColor(skVal, colorize.sk)
+                        return <TableRow
+                            key={i}
+                            style={{
+                                ...(getColor(k, colorize.pk) || skColor ? {background: skColor || getColor(k, colorize.pk)} : {}),
+                            }}
+                        >
+                            <TableCell
+                                style={{
+                                    whiteSpace: 'nowrap',
+                                    textOverflow: 'ellipsis',
+                                    overflow: 'hidden',
+                                    ...(skColor ? {background: skColor} : {}),
+                                }}
+                            >{skVal}</TableCell>
+                            {parsedData.displayKeys.map((ik: string) =>
+                                <DataTableCell key={ik} ik={ik} sk={sk}/>
+                            )}
+                        </TableRow>
+                    })}
                 </React.Fragment>)}
             </TableBody>
         </Table>
     </TableContainer>
 }
 const DataTable = memo(DataTableBase)
+
+function getColor(value: any, rules: ColorizeRule[]) {
+    if(!rules) {
+        return undefined
+    }
+    return rules.reduce((match: string | undefined, rule): string | undefined => {
+        if(match || !rule.color || !rule.comparison || rule.search === '' || typeof rule.search === 'undefined') {
+            return match
+        }
+        switch(rule.comparison) {
+            case '=':
+                return value === rule.search ? rule.color : undefined
+            case '≠':
+                return value !== rule.search ? rule.color : undefined
+            case '>':
+                return value > rule.search ? rule.color : undefined
+            case '<':
+                return value < rule.search ? rule.color : undefined
+            case '>=':
+                return value >= rule.search ? rule.color : undefined
+            case '<=':
+                return value <= rule.search ? rule.color : undefined
+            case 'begins_with':
+                return typeof value === 'string' && value.indexOf(rule.search) === 0 ? rule.color : undefined
+            case 'contains':
+                return typeof value === 'string' && value.indexOf(rule.search) !== -1 ? rule.color : undefined
+            case 'regex':
+                break
+        }
+        return match
+    }, undefined)
+}
 
 const DataTableCell = (
     {
@@ -428,10 +521,12 @@ const DataTableHead = (
     {
         parsedData, index,
         toggleDisplayKeys,
+        setOpenSidebar,
     }: {
         parsedData: any
         index: any[]
         toggleDisplayKeys: (key: string) => void
+        setOpenSidebar: (key: string | ((key: string | undefined) => string | undefined)) => void
     }
 ) => {
     const theme = useTheme()
@@ -441,8 +536,28 @@ const DataTableHead = (
         background: theme.palette.background.paper,
     }}>
         <TableRow>
-            <TableCell component={'th'} style={{fontWeight: 'bold'}}>{index[0].AttributeName}</TableCell>
-            <TableCell component={'th'} style={{fontWeight: 'bold'}}>{index[1].AttributeName}</TableCell>
+            <TableCell component={'th'} style={{fontWeight: 'bold'}}>
+                <div style={{display: 'flex', alignItems: 'center'}}>
+                    <span style={{fontWeight: 'bold', marginRight: 6}}>{index[0].AttributeName}</span>
+                    <IconButton
+                        size={'small'} style={{marginLeft: 4}}
+                        onClick={() => setOpenSidebar(id => id === 'colorize' ? undefined : 'colorize')}
+                    >
+                        <IcColorize style={{padding: 4}}/>
+                    </IconButton>
+                </div>
+            </TableCell>
+            <TableCell component={'th'} style={{fontWeight: 'bold'}}>
+                <div style={{display: 'flex', alignItems: 'center'}}>
+                    <span style={{fontWeight: 'bold', marginRight: 6}}>{index[1].AttributeName}</span>
+                    <IconButton
+                        size={'small'} style={{marginLeft: 4}}
+                        onClick={() => setOpenSidebar(id => id === 'colorize' ? undefined : 'colorize')}
+                    >
+                        <IcColorize style={{padding: 4}}/>
+                    </IconButton>
+                </div>
+            </TableCell>
             {parsedData.displayKeys.map((k: string) => <TableCell
                 key={k}
                 component={'th'}

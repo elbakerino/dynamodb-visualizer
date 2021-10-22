@@ -51,14 +51,14 @@ const DynamoTableDataSecondaryKeysBase = (
                         </Typography>
 
                         {openId === 'info' ? <>
-                            {keyIndex.KeySchema[1] ? <Box py={0.5}>
+                            {keyIndex.KeySchema[0] ? <Box py={0.5}>
                                 <Typography variant={'body2'} style={{opacity: 0.65}}>
                                     Primary Key:
                                 </Typography>
                                 <Typography variant={'body2'}>
-                                    {keyIndex.KeySchema[1].AttributeName}
+                                    {keyIndex.KeySchema[0].AttributeName}
                                     {' '}
-                                    <small>({keyIndex.KeySchema[1].KeyType})</small>
+                                    <small>({keyIndex.KeySchema[0].KeyType})</small>
                                 </Typography>
                             </Box> : null}
                             {keyIndex.KeySchema[1] ? <Box py={0.5}>
