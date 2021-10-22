@@ -9,7 +9,7 @@ const DynamoTableDataSecondaryKeysBase = (
         tableSchemaSecIndex: any
         openId: string | undefined
         activeIndex: string | undefined
-        setActiveIndex: (ix: string|undefined) => void
+        setActiveIndex: undefined | ((ix: string | undefined) => void)
     }
 ) => {
     return <>
@@ -31,10 +31,10 @@ const DynamoTableDataSecondaryKeysBase = (
                         flexGrow: openId === 'info' ? 1 : 0,
                         flexShrink: 0,
                         background: activeIndex === keyIndex.IndexName ? undefined : 'transparent',
-                        cursor: 'pointer'
+                        cursor: setActiveIndex ? 'pointer' : undefined
                     }}
-                    tabIndex={-1}
-                    onClick={() => setActiveIndex(keyIndex.IndexName)}
+                    tabIndex={setActiveIndex ? -1 : undefined}
+                    onClick={() => setActiveIndex && setActiveIndex(keyIndex.IndexName)}
                 >
                     <Box
                         my={openId === 'info' ? 2 : 0}
@@ -44,7 +44,8 @@ const DynamoTableDataSecondaryKeysBase = (
                             variant={'overline'} component={'span'} gutterBottom={openId === 'info'}
                             style={{
                                 display: 'block',
-                                fontWeight: activeIndex === keyIndex.IndexName ? 'bold' : 'normal'
+                                fontWeight: activeIndex === keyIndex.IndexName ? 'bold' : 'normal',
+                                pointerEvents: setActiveIndex ? 'none' : undefined,
                             }}
                         >
                             {keyIndex.IndexName}

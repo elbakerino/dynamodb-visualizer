@@ -4,14 +4,14 @@ import React from 'react'
 export const DynamoTableDataInfo = (
     {
         tableSchema, tableSchemaKeyIndex, activeTable,
-        activeIndex, setActiveIndex,
+        //activeIndex, setActiveIndex,
     }:
         {
             activeTable: string | undefined
             tableSchemaKeyIndex: any
             tableSchema: any
-            activeIndex: string | undefined
-            setActiveIndex: (ix: string | undefined) => void
+            //activeIndex: string | undefined
+            //setActiveIndex: (ix: string | undefined) => void
         }
 ) => {
     return <>
@@ -47,11 +47,11 @@ export const DynamoTableDataInfo = (
                     style={{
                         marginRight: 4,
                         marginBottom: 4,
-                        background: typeof activeIndex === 'undefined' ? undefined : 'transparent',
-                        cursor: 'pointer'
+                        //background: typeof activeIndex === 'undefined' ? undefined : 'transparent',
+                        //cursor: 'pointer'
                     }}
-                    tabIndex={-1}
-                    onClick={() => setActiveIndex(undefined)}
+                    //tabIndex={-1}
+                    //onClick={() => setActiveIndex(undefined)}
                 >
                     <Box my={2} mx={2}>
                         {tableSchemaKeyIndex[0] ? <Box py={0.5}>

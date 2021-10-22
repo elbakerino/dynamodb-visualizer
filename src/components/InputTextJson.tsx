@@ -27,7 +27,7 @@ export const InputTextJson = <K extends {}>(
             fullWidth
             label={label}
             value={textValue}
-            maxRows={25}
+            //maxRows={25}
             onChange={(e) => {
                 setTextValue(e.target.value)
             }}

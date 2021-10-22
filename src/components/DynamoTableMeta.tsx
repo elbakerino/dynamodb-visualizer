@@ -28,18 +28,30 @@ export const DynamoTableMeta = (
     //console.log(tableSchema)
     //console.log(tableExampleData)
 
-    return <Box m={2}>
+    return <Box m={2} style={{
+        flexGrow: 1, overflow: 'auto', display: 'flex',
+        flexDirection: 'column', alignContent: 'flex-start',
+    }}>
         <Typography variant={'h1'} gutterBottom>
             Table Config: <code>{activeTable}</code>
         </Typography>
 
         {table ?
-            <Box style={{display: 'flex', flexDirection: 'column'}} my={2}>
-                <Accordion expanded={openId === 'schema'} onChange={() => setOpenId(id => id === 'schema' ? undefined : 'schema')}>
+            <Box style={{display: 'flex', flexDirection: 'column', overflow: 'auto', flexGrow: 1}} my={2}>
+                <Accordion
+                    expanded={openId === 'schema'} onChange={() => setOpenId(id => id === 'schema' ? undefined : 'schema')}
+                    style={{
+                        display: 'flex', flexDirection: 'column',
+                        overflow: openId === 'schema' ? 'auto' : 'hidden',
+                        flexShrink: openId === 'schema' ? 1 : 0,
+                    }}
+                    TransitionProps={{style: {overflow: 'auto'}, timeout: 60}}
+                >
                     <AccordionSummary
                         expandIcon={<IcExpandMore/>}
                         aria-controls="table-config--schema--c"
                         id="table-config--schema--h"
+                        style={{flexShrink: 0}}
                     >
                         <Box style={{display: 'flex', flexDirection: 'column'}}>
                             <Typography>Table Schema</Typography>
@@ -64,11 +76,21 @@ export const DynamoTableMeta = (
                         <Button size={'small'} style={{marginTop: 4}}>save</Button>
                     </AccordionDetails>
                 </Accordion>
-                <Accordion expanded={openId === 'exampleData'} onChange={() => setOpenId(id => id === 'exampleData' ? undefined : 'exampleData')}>
+                <Accordion
+                    expanded={openId === 'exampleData'} onChange={() => setOpenId(id => id === 'exampleData' ? undefined : 'exampleData')}
+                    style={{
+                        display: 'flex', flexDirection: 'column',
+                        overflow: openId === 'exampleData' ? 'auto' : 'hidden',
+                        flexShrink: openId === 'exampleData' ? 1 : 0,
+                        //overflow: 'auto',
+                    }}
+                    TransitionProps={{style: {overflow: 'auto'}, timeout: 60}}
+                >
                     <AccordionSummary
                         expandIcon={<IcExpandMore/>}
                         aria-controls="table-config--exampleData--c"
                         id="table-config--exampleData--h"
+                        style={{flexShrink: 0}}
                     >
                         <Box style={{display: 'flex', flexDirection: 'column'}}>
                             <Typography>Example Data</Typography>
@@ -84,7 +106,9 @@ export const DynamoTableMeta = (
                             }</Typography>
                         </Box>
                     </AccordionSummary>
-                    <AccordionDetails style={{flexWrap: 'wrap'}}>
+                    <AccordionDetails
+                        style={{flexWrap: 'wrap', display: 'flex'}}
+                    >
                         <InputTextJson
                             label={'Data as JSON'}
                             value={tableExampleData}

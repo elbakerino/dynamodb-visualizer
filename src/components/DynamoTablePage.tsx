@@ -2,6 +2,7 @@ import React, { memo } from 'react'
 import { DynamoTableMeta } from './DynamoTableMeta'
 import { DynamoTableData } from './DynamoTableData'
 import { Route, Switch } from 'react-router-dom'
+import { DynamoTableInfo } from './DynamoTableInfo'
 
 const DynamoTablePageBase = (
     {
@@ -47,7 +48,14 @@ const DynamoTablePageBase = (
                 />
             </Route>
 
-            <Route path={`/table/${matchTableId}/data`}>
+            <Route path={`/table/${matchTableId}/info`}>
+                <DynamoTableInfo
+                    tables={tables}
+                    activeTable={activeTable}
+                />
+            </Route>
+
+            <Route path={`/table/${matchTableId}/viz`}>
                 <DynamoTableData
                     tables={tables}
                     activeTable={activeTable}

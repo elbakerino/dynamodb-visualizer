@@ -1,11 +1,14 @@
 import React, { memo } from 'react'
 import { Link, useHistory } from 'react-router-dom'
-import { AppBar, Box, IconButton, Toolbar, Typography } from '@material-ui/core'
+import { AppBar, Box, IconButton, Paper, Toolbar, Typography } from '@material-ui/core'
 import IcHome from '@material-ui/icons/Home'
 import IcGitHub from '@material-ui/icons/GitHub'
 import IcTheme from '@material-ui/icons/InvertColors'
 import ToggleButton from '@material-ui/lab/ToggleButton'
 import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup'
+import IcTune from '@material-ui/icons/Tune'
+import IcInfo from '@material-ui/icons/Description'
+import IcViz from '@material-ui/icons/TableChart'
 
 const LayoutBase: React.ComponentType<React.PropsWithChildren<{
     activeTable: string | undefined
@@ -33,27 +36,6 @@ const LayoutBase: React.ComponentType<React.PropsWithChildren<{
                     <span>by bemit</span>
                 </Typography>
 
-                {activeTable ? <Box ml={2}><ToggleButtonGroup
-                    value={tableAction ? tableAction : 'config'}
-                    exclusive
-                    onChange={(e, val) =>
-                        val ?
-                            history.push('/table/' + activeTable + '/' + val) :
-                            history.push('/table/' + activeTable + '/' + (tableAction || 'config'))
-                    }
-                >
-                    <ToggleButton value="config" style={{color: 'inherit'}}>
-                        Config
-                    </ToggleButton>
-                    <ToggleButton value="data" style={{color: 'inherit'}}>
-                        Data
-                    </ToggleButton>
-                </ToggleButtonGroup></Box> : null}
-
-                {activeTable ? <Box ml={2}><Typography variant={'body2'} style={{fontWeight: 'bold', letterSpacing: 0.56}}>
-                    Table: <code>{activeTable}</code>
-                </Typography></Box> : null}
-
                 <IconButton
                     edge="start" color="inherit" aria-label="menu"
                     href={'https://github.com/elbakerino/dynamodb-visualizer'}
@@ -72,6 +54,38 @@ const LayoutBase: React.ComponentType<React.PropsWithChildren<{
             </Toolbar>
         </AppBar>
         {children}
+        {activeTable ? <Box style={{flexShrink: 0}} p={1}>
+            <Paper elevation={2}>
+                <Box p={1} style={{display: 'flex', alignItems: 'center', overflow: 'auto', flexShrink: 0}}>
+                    <ToggleButtonGroup
+                        value={tableAction ? tableAction : 'config'}
+                        exclusive
+                        onChange={(e, val) =>
+                            val ?
+                                history.push('/table/' + activeTable + '/' + val) :
+                                history.push('/table/' + activeTable + '/' + (tableAction || 'config'))
+                        }
+                    >
+                        <ToggleButton value="config" style={{color: 'inherit'}}>
+                            <IcTune/>
+                            <span style={{paddingLeft: 8}}>Config</span>
+                        </ToggleButton>
+                        <ToggleButton value="info" style={{color: 'inherit'}}>
+                            <IcInfo/>
+                            <span style={{paddingLeft: 8}}>Info</span>
+                        </ToggleButton>
+                        <ToggleButton value="viz" style={{color: 'inherit'}}>
+                            <IcViz/>
+                            <span style={{paddingLeft: 8}}>Viz</span>
+                        </ToggleButton>
+                    </ToggleButtonGroup>
+
+                    <Box ml={2}><Typography variant={'body2'} style={{marginLeft: 'auto', fontWeight: 'bold', letterSpacing: 0.56}}>
+                        Table: <code>{activeTable}</code>
+                    </Typography></Box>
+                </Box>
+            </Paper>
+        </Box> : null}
     </>
 }
 
