@@ -6,7 +6,7 @@ import IcSwap from '@material-ui/icons/SwapVerticalCircleOutlined'
 import IcColorize from '@material-ui/icons/ColorLens'
 import IcClose from '@material-ui/icons/Close'
 
-export type ColorPickerIdType = undefined | [string, number]
+export type ColorPickerIdType = undefined | [string, number, Element]
 export type setColorPickerIdType = React.Dispatch<React.SetStateAction<ColorPickerIdType>>
 
 const ColorizeRuleset: React.ComponentType<{
@@ -61,10 +61,9 @@ const ColorizeRuleEdit: React.ComponentType<{
         ml={2}
     >
         <Typography style={{width: '100%'}}>{ruleIndex + 1}. Rule</Typography>
-        {/*(ruleSet[keyId] || []).length*/}
         <Box style={{display: 'flex'}}>
             <FormControl style={{width: 145}}>
-                <InputLabel id={'colorize--' + keyId + '--' + ruleIndex + '_label'}>Comparision</InputLabel>
+                <InputLabel id={'colorize--' + keyId + '--' + ruleIndex + '_label'}>Comparison</InputLabel>
                 <Select
                     labelId={'colorize--' + keyId + '--' + ruleIndex + '_label'}
                     id={'colorize--' + keyId + '--' + ruleIndex + '_select'}
@@ -113,12 +112,12 @@ const ColorizeRuleEdit: React.ComponentType<{
             <Box>
                 <Button
                     innerRef={btnRef}
-                    onClick={() => {
+                    onClick={(e) => {
                         setColorPickerId(pid => {
                             if(pid && pid[0] === keyId && pid[1] === ruleIndex) {
                                 return undefined
                             }
-                            return [keyId, ruleIndex]
+                            return [keyId, ruleIndex, e.currentTarget]
                         })
                     }}
                     style={{padding: 8, minWidth: 0}}
@@ -133,8 +132,7 @@ const ColorizeRuleEdit: React.ComponentType<{
                 <Popover
                     //id={id}
                     open={Boolean(colorPickerId && colorPickerId[0] === keyId && colorPickerId[1] === ruleIndex)}
-                    // @ts-ignore
-                    anchorEl={btnRef}
+                    anchorEl={colorPickerId ? colorPickerId[2]  : undefined}
                     onClose={() => setColorPickerId(undefined)}
                     anchorOrigin={{
                         vertical: 'bottom',
