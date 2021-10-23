@@ -384,46 +384,61 @@ const DataTableBase = (
             <DataTableHead parsedData={parsedData} index={index} toggleDisplayKeys={toggleDisplayKeys} setOpenSidebar={setOpenSidebar}/>
 
             <TableBody>
-                {Object.keys(parsedData.sorted).map((pk) => <React.Fragment key={pk}>
-                    <TableRow>
-                        <TableCell
-                            style={{
-                                whiteSpace: 'nowrap',
-                                textOverflow: 'ellipsis',
-                                overflow: 'hidden',
-                                ...(getColor(pk, colorize.pk) ? {background: getColor(pk, colorize.pk)} : {}),
-                            }}
-                            rowSpan={(parsedData.sorted[pk]?.length || 0) + 1}
-                        >{pk}</TableCell>
-                    </TableRow>
-                    {parsedData.sorted[pk]?.map((sk: any, i: number) => {
-                        const skVal = index[1] ? Object.values(sk[index[1].AttributeName])[0] as string : undefined
-                        const skColor = getColor(skVal, colorize.sk)
-                        return <TableRow
-                            key={i}
-                            style={{
-                                ...(getColor(pk, colorize.pk) || skColor ? {background: skColor || getColor(pk, colorize.pk)} : {}),
-                            }}
-                        >
-                            {index[1] ? <TableCell
+                {Object.keys(parsedData.sorted).map((pk) => {
+                    const pkColor = getColor(pk, colorize.pk)
+                    return <React.Fragment key={pk}>
+                        <TableRow>
+                            <TableCell
                                 style={{
                                     whiteSpace: 'nowrap',
                                     textOverflow: 'ellipsis',
                                     overflow: 'hidden',
-                                    ...(skColor ? {background: skColor} : {}),
+                                    ...(pkColor ? {background: pkColor} : {}),
                                 }}
-                            >{skVal}</TableCell> : null}
-                            {parsedData.displayKeys.map((ik: string) =>
-                                <DataTableCell key={ik} ik={ik} sk={sk}/>
-                            )}
+                                rowSpan={(parsedData.sorted[pk]?.length || 0) + 1}
+                            >{pk}</TableCell>
                         </TableRow>
-                    })}
-                </React.Fragment>)}
+                        {parsedData.sorted[pk]?.map((sk: any, i: number) =>
+                            <DataTableRow
+                                key={i}
+                                index={index}
+                                sk={sk}
+                                pkColor={pkColor}
+                                skRule={colorize.sk}
+                                parsedData={parsedData}
+                            />
+                        )}
+                    </React.Fragment>
+                })}
             </TableBody>
         </Table>
     </TableContainer>
 }
 const DataTable = memo(DataTableBase)
+
+// @ts-ignore
+const DataTableRowBase = ({index, sk, pkColor, skRule, parsedData}) => {
+    const skVal = index[1] ? Object.values(sk[index[1].AttributeName])[0] as string : undefined
+    const skColor = getColor(skVal, skRule)
+    return <TableRow
+        style={{
+            ...(pkColor || skColor ? {background: skColor || pkColor} : {}),
+        }}
+    >
+        {index[1] ? <TableCell
+            style={{
+                whiteSpace: 'nowrap',
+                textOverflow: 'ellipsis',
+                overflow: 'hidden',
+                ...(skColor ? {background: skColor} : {}),
+            }}
+        >{skVal}</TableCell> : null}
+        {parsedData.displayKeys.map((ik: string) =>
+            <DataTableCell key={ik} ik={ik} sk={sk}/>
+        )}
+    </TableRow>
+}
+const DataTableRow = memo(DataTableRowBase)
 
 function getColor(value: any, rules: ColorizeRule[]) {
     if(!rules || typeof value === 'undefined') {
@@ -457,7 +472,7 @@ function getColor(value: any, rules: ColorizeRule[]) {
     }, undefined)
 }
 
-const DataTableCell = (
+const DataTableCellBase = (
     {
         sk, ik
     }: {
@@ -484,6 +499,8 @@ const DataTableCell = (
             : <span style={{opacity: 0.5}}>-</span>}
     </TableCell>
 }
+
+const DataTableCell = memo(DataTableCellBase)
 
 const DataTableHeadCell: React.ComponentType<{
     name: string | undefined
@@ -513,7 +530,7 @@ const DataTableHeadCell: React.ComponentType<{
     </TableCell>
 }
 
-const DataTableHead = (
+const DataTableHeadBase = (
     {
         parsedData, index,
         toggleDisplayKeys,
@@ -569,5 +586,6 @@ const DataTableHead = (
         </TableRow>
     </TableHead>
 }
+const DataTableHead = memo(DataTableHeadBase)
 
 export const DynamoTableData = memo(DynamoTableDataBase)

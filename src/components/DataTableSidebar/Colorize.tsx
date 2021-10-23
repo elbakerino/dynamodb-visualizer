@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { memo } from 'react'
 import Box from '@material-ui/core/Box'
 import { Button, FormControl, IconButton, InputLabel, MenuItem, Popover, Select, TextField, Typography } from '@material-ui/core'
 import IcColorize from '@material-ui/icons/ColorLens'
@@ -20,10 +20,10 @@ export interface ColorizeRule {
     search: string | undefined
 }
 
-const ColorizeRuleset: React.ComponentType<{
+const ColorizeRulesetBase: React.ComponentType<{
     keyId: keyof ColorizeRulesetType
     setRuleset: React.Dispatch<React.SetStateAction<ColorizeRulesetType>>
-    ruleSet: ColorizeRulesetType
+    ruleSet: ColorizeRule[]
     colorPickerId: ColorPickerIdType
     setColorPickerId: setColorPickerIdType
 }> = ({
@@ -32,9 +32,9 @@ const ColorizeRuleset: React.ComponentType<{
       }) => {
     return <Box style={{flexShrink: 0}} ml={2}>
         <Typography>Rules</Typography>
-        {(ruleSet[keyId] || []).map((rs, i) => <ColorizeRuleEdit
+        {ruleSet.map((rs, i) => <ColorizeRuleEdit
             key={i}
-            rule={ruleSet[keyId][i]}
+            rule={ruleSet[i]}
             setRuleset={setRuleset}
             keyId={keyId}
             ruleIndex={i}
@@ -50,8 +50,9 @@ const ColorizeRuleset: React.ComponentType<{
         })}>add Rule</Button>
     </Box>
 }
+const ColorizeRuleset = memo(ColorizeRulesetBase)
 
-const ColorizeRuleEdit: React.ComponentType<{
+const ColorizeRuleEditBase: React.ComponentType<{
     keyId: keyof ColorizeRulesetType
     ruleIndex: number
     setRuleset: React.Dispatch<React.SetStateAction<ColorizeRulesetType>>
@@ -185,6 +186,8 @@ const ColorizeRuleEdit: React.ComponentType<{
     </Box>
 }
 
+const ColorizeRuleEdit = memo(ColorizeRuleEditBase)
+
 export const SidebarColorize: React.ComponentType<{
     ruleSet: ColorizeRulesetType
     setRuleset: React.Dispatch<React.SetStateAction<ColorizeRulesetType>>
@@ -203,7 +206,7 @@ export const SidebarColorize: React.ComponentType<{
         <Typography>Partition Key</Typography>
         <Box style={{width: '100%', overflow: 'auto'}}>
             <ColorizeRuleset
-                keyId={'pk'} setRuleset={setRuleset} ruleSet={ruleSet}
+                keyId={'pk'} setRuleset={setRuleset} ruleSet={ruleSet.pk}
                 colorPickerId={colorPickerId} setColorPickerId={setColorPickerId}
             />
         </Box>
@@ -225,7 +228,7 @@ export const SidebarColorize: React.ComponentType<{
         <Typography>Sort Key</Typography>
         <Box style={{width: '100%', overflow: 'auto'}}>
             <ColorizeRuleset
-                keyId={'sk'} setRuleset={setRuleset} ruleSet={ruleSet}
+                keyId={'sk'} setRuleset={setRuleset} ruleSet={ruleSet.sk}
                 colorPickerId={colorPickerId} setColorPickerId={setColorPickerId}
             />
         </Box>
