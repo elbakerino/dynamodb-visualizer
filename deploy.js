@@ -91,12 +91,16 @@ const handler = {
         if(!AUTH0_ISSUER) {
             return Promise.reject('AUTH0_ISSUER must be set!')
         }
+        const isProd = GIT_BRANCH === 'main'
+
         return await runDeploy(
             deployments,
             {
                 rootDir, rootDirs: {},
                 envConfig: {
                     GIT_BRANCH,
+                    NODE_ENV: isProd ? 'production' : 'development',
+                    APP_ENV: isProd ? 'prod' : 'dev',
                     AUTH0_ID,
                     AUTH0_SECRET,
                     AUTH0_AUDIENCE,
