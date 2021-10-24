@@ -1,31 +1,31 @@
 import React, { memo } from 'react'
 import { DynamoTableMeta } from './DynamoTableMeta'
-import { DynamoTableData } from './DynamoTableData'
+import { DynamoDataTable } from './DynamoDataTable'
 import { Route, Switch } from 'react-router-dom'
 import { DynamoTableInfo } from './DynamoTableInfo'
+import { useDynamoTables } from '../feature/DynamoTables'
 
 const DynamoTablePageBase = (
     {
-        tables,
-        updateTables,
         match,
-        activeTable, setActiveTable,
-        setTableAction
+        setActiveTable,
+        setTableAction,
     }: {
-        tables: any[],
-        updateTables: (table: (any | ((table?: any) => any)), id: (string | undefined)) => void
-        activeTable: string | undefined
         setActiveTable: (table: string | undefined) => void
-        tableAction: string | undefined
         setTableAction: (table: string | undefined) => void
         match: { params: { [k: string]: string } }
     }
 ) => {
+    const {loadDetails} = useDynamoTables()
+
     const matchTableId = match.params.tableId
     React.useEffect(() => {
-        setActiveTable(matchTableId)
+        loadDetails(matchTableId).then(res => {
+            if(res) setActiveTable(matchTableId)
+        })
         return () => setActiveTable(undefined)
-    }, [setActiveTable, matchTableId])
+    }, [setActiveTable, matchTableId, loadDetails])
+
     const matchTableAction = match.params.tableAction
     React.useEffect(() => {
         setTableAction(matchTableAction)
@@ -41,25 +41,15 @@ const DynamoTablePageBase = (
                 ]}
                 exact
             >
-                <DynamoTableMeta
-                    tables={tables}
-                    updateTables={updateTables}
-                    activeTable={activeTable}
-                />
+                <DynamoTableMeta activeTable={matchTableId}/>
             </Route>
 
             <Route path={`/table/${matchTableId}/info`}>
-                <DynamoTableInfo
-                    tables={tables}
-                    activeTable={activeTable}
-                />
+                <DynamoTableInfo activeTable={matchTableId}/>
             </Route>
 
             <Route path={`/table/${matchTableId}/viz`}>
-                <DynamoTableData
-                    tables={tables}
-                    activeTable={activeTable}
-                />
+                <DynamoDataTable activeTable={matchTableId}/>
             </Route>
         </Switch>
     </>

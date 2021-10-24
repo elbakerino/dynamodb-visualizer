@@ -1,22 +1,25 @@
 import { Box, Button, List, ListItem, ListItemText, TextField, Typography } from '@material-ui/core'
 import React from 'react'
 import { useHistory } from 'react-router-dom'
+import { useDynamoTables } from '../feature/DynamoTables'
+import { useExplorerContext } from '../feature/ExplorerContext'
 
-export const DynamoTables = (
-    {
-        tables,
-        updateTables,
-        activeTable,
-    }: {
-        tables: any[],
-        updateTables: (table: (any | ((table?: any) => any)), id: (string | undefined)) => void
-        activeTable: string | undefined
-    }
-) => {
+export const DynamoTables = () => {
+    const {id} = useExplorerContext()
     const history = useHistory()
+    const {list, create, tables, tableDetails} = useDynamoTables()
     const [newName, setNewName] = React.useState('')
+    console.log('tables', tables.toJS(), tableDetails.toJS())
 
-    return <Box m={2}>
+    React.useEffect(() => {
+        list().then(() => {
+
+        }).catch(() => {
+
+        })
+    }, [list])
+
+    return <Box m={2} style={{flexGrow: 1, overflow: 'auto'}}>
         <Typography variant={'h1'} gutterBottom>
             Tables Overview
         </Typography>
@@ -30,10 +33,14 @@ export const DynamoTables = (
                 onChange={(e) => setNewName(e.target.value)}
             />
             <Button
-                disabled={Boolean(tables.find(t => t.id === newName)) || newName.trim() === ''}
+                //disabled={Boolean(tables.find(t => t.id === newName)) || newName.trim() === ''}
                 onClick={() => {
-                    updateTables({id: newName}, newName)
-                    setNewName('')
+                    //updateTables({id: newName}, newName)
+                    create(newName).then(res => {
+                        if(res) {
+                            setNewName('')
+                        }
+                    })
                 }}
             >add</Button>
         </Box>
@@ -45,18 +52,18 @@ export const DynamoTables = (
 
             <List dense style={{width: '100%'}}>
                 {tables.map(table => <ListItem
-                    key={table.id} button
-                    selected={activeTable === table.id}
+                    key={table.uuid} button
                     onClick={() => {
-                        history.push('/table/' + table.id)
+                        history.push({
+                            pathname: '/table/' + table.uuid,
+                            search: id ? '?explorer=' + encodeURIComponent(id) : '',
+                        })
                     }}
                 >
                     <ListItemText
-                        primary={table.id}
+                        primary={table.name}
                         secondary={<>
-                            {tables.find(t => t.id === table.id)?.schema ? 'has schema' : 'missing schema'}
-                            {', '}
-                            {tables.find(t => t.id === table.id)?.exampleData ? 'has data' : 'missing data'}
+                            <small>{table.uuid}</small>
                         </>}
                     />
                 </ListItem>)}

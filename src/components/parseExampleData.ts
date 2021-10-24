@@ -1,4 +1,4 @@
-import { DynamoDbIndex, ParsedDataResult } from './DynamoTableData'
+import { DynamoDbIndex, ParsedDataResult } from './DynamoDataTable'
 
 export const parseExampleData = (
     index: [DynamoDbIndex] | [DynamoDbIndex, DynamoDbIndex],
@@ -26,7 +26,7 @@ export const parseExampleData = (
         }
         sorted[partitionKey].push(item)
         Object.keys(item)
-            .filter(k => k !== partition.AttributeName && (!sort || k !== sort.AttributeName))
+            .filter(k => k !== partition.AttributeName && (typeof sort === 'undefined' || k !== sort.AttributeName))
             .forEach((ik) => allKeys.includes(ik) ? null : allKeys.push(ik))
     })
 

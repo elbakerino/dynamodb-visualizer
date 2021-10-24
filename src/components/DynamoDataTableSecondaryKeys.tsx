@@ -1,7 +1,7 @@
 import { Box, Paper, Typography } from '@material-ui/core'
 import React, { memo } from 'react'
 
-const DynamoTableDataSecondaryKeysBase = (
+const DynamoDataTableSecondaryKeysBase = (
     {
         tableSchemaSecIndex, openId,
         activeIndex, setActiveIndex,
@@ -80,4 +80,4 @@ const DynamoTableDataSecondaryKeysBase = (
     </>
 }
 
-export const DynamoTableDataSecondaryKeys = memo(DynamoTableDataSecondaryKeysBase)
+export const DynamoDataTableSecondaryKeys = memo(DynamoDataTableSecondaryKeysBase)

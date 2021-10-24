@@ -2,70 +2,25 @@ import React from 'react'
 import { Route, Switch } from 'react-router-dom'
 import { DynamoTables } from './DynamoTables'
 import { DynamoTablePage } from './DynamoTablePage'
-import { DynamoPresets } from './DynamoTableData'
+import { DynamoExplorers } from './DynamoDataTable'
+import { ExplorerEndpoints } from './ExplorerEndpoints'
+import { useExplorerContext } from '../feature/ExplorerContext'
+import { useDispatch } from 'react-redux'
+import { ExplorerTableActionClear } from '../feature/DynamoTables'
+import { UserProfile } from './User/UserProfile'
 
-const getLocal = () => {
-    const entryIndex = window.localStorage.getItem('dyndb-preview--tables-index')
-    let parsedEntry: {
-        data: any[] | undefined
-        index: string[] | undefined
-    } = {
-        data: undefined,
-        index: undefined,
-    }
-    if(entryIndex) {
-        try {
-            parsedEntry.index = JSON.parse(entryIndex)
-        } catch(e) {
-            console.log('error json data for tables-index', e)
-        }
-    }
-    if(parsedEntry.index) {
-        [...parsedEntry.index].forEach((tableId, i) => {
-            try {
-                const entryData = window.localStorage.getItem('dyndb-preview--table__' + tableId)
-                if(entryData) {
-                    if(!parsedEntry.data) parsedEntry.data = []
-
-                    parsedEntry.data.push(JSON.parse(entryData))
-                } else {
-                    parsedEntry.index?.splice(i, 1)
-                }
-            } catch(e) {
-                console.log('error json data for table__' + tableId, e)
-            }
-        })
-    }
-    return parsedEntry
+export const setLocalExplorers = (explorers: DynamoExplorers) => {
+    window.localStorage.setItem('dyndb-viz--explorers', JSON.stringify(explorers))
 }
 
-const setLocalTable = (table: any) => {
-    window.localStorage.setItem('dyndb-preview--table__' + table.id, JSON.stringify(table))
-}
-
-const setLocalIndex = (updater: (tables: string[] | undefined) => string[]) => {
-    const prev = window.localStorage.getItem('dyndb-preview--tables-index')
-    let next
-    try {
-        next = updater(prev ? JSON.parse(prev) : [])
-    } catch(e) {
-        next = updater([])
-    }
-    window.localStorage.setItem('dyndb-preview--tables-index', JSON.stringify(next))
-}
-
-export const setLocalPreset = (table: string, presets: DynamoPresets) => {
-    window.localStorage.setItem('dyndb-preview--table_presets__' + table, JSON.stringify(presets))
-}
-
-export const getLocalPresets = (tableId: string): DynamoPresets => {
-    const entry = window.localStorage.getItem('dyndb-preview--table_presets__' + tableId)
-    let parsed: DynamoPresets = []
+export const getLocalExplorers = (): DynamoExplorers => {
+    const entry = window.localStorage.getItem('dyndb-viz--explorers')
+    let parsed: DynamoExplorers = []
     if(entry) {
         try {
             parsed = JSON.parse(entry)
         } catch(e) {
-            console.log('error json data for table_presets__' + tableId, e)
+            console.log('error json data for dyndb-viz--explorers', e)
         }
     }
     return parsed
@@ -73,62 +28,49 @@ export const getLocalPresets = (tableId: string): DynamoPresets => {
 
 export const Visualizer = (
     {
-        activeTable, setActiveTable,
-        tableAction, setTableAction,
+        setActiveTable,
+        setTableAction,
+        explorers, setExplorers,
     }:
         {
-            activeTable: string | undefined
             setActiveTable: (table: string | undefined) => void
-            tableAction: string | undefined
             setTableAction: (table: string | undefined) => void
+            explorers: DynamoExplorers
+            setExplorers: React.Dispatch<React.SetStateAction<DynamoExplorers>>
         }
 ) => {
-    const [tables, setTables] = React.useState<any>(() => getLocal())
+    const {setActive, id} = useExplorerContext()
+    const dispatch = useDispatch()
+    const mounted = React.useRef(false)
 
-    const updateTables = React.useCallback((table: any | ((table?: any) => any), id: string | undefined) => {
-        setTables((tables: any) => {
-            let tablesData = [...(tables.data || [])]
-            const index = tablesData.findIndex(t => t.id === id)
-            if(index !== -1) {
-                table = typeof table === 'function' ? table(tablesData[index]) : table
-                tablesData.splice(index, 1, table)
-            } else {
-                table = typeof table === 'function' ? table() : table
-                tablesData.push(table)
-            }
-
-            if(table.id) {
-                setLocalTable(table)
-            }
-
-            setLocalIndex((current = []) => tablesData.reduce((a, b) => {
-                if(a.includes(b.id)) return a
-                a.push(b.id)
-                return a
-            }, current))
-            tables.data = tablesData
-            return {...tables}
-        })
-    }, [setTables])
-
-    const tablesData = tables?.data || []
+    React.useEffect(() => {
+        if(mounted.current) {
+            dispatch({
+                type: 'explorer_tables.clear',
+            } as ExplorerTableActionClear)
+        }
+        mounted.current = true
+    }, [id, dispatch])
 
     return <Switch>
         <Route path="/" exact>
-            <DynamoTables
-                tables={tablesData}
-                updateTables={updateTables}
-                activeTable={activeTable}
+            <ExplorerEndpoints
+                explorers={explorers}
+                setExplorers={setExplorers}
+                activeExplorer={id}
+                setActiveExplorer={setActive}
             />
+        </Route>
+        <Route path="/tables" exact>
+            <DynamoTables/>
+        </Route>
+        <Route path="/user" exact>
+            <UserProfile/>
         </Route>
         <Route path="/table/:tableId/:tableAction?"
                render={({match}) =>
                    <DynamoTablePage
-                       tables={tablesData}
-                       updateTables={updateTables}
-                       activeTable={activeTable}
                        setActiveTable={setActiveTable}
-                       tableAction={tableAction}
                        setTableAction={setTableAction}
                        match={match}
                    />
