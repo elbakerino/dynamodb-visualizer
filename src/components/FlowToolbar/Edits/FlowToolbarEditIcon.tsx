@@ -22,9 +22,11 @@ export const FlowToolbarEditIconBase = <FSD extends FlowStateDataScopes>(
         selectedElement,
         updateView,
         colorMapId = 'flow_box',
+        containerRef,
     }: {
         icon: FlowStateView['icon'] | undefined
         colorMapId?: string
+        containerRef?: React.MutableRefObject<HTMLDivElement | null>
     } & FlowToolbarEditProps<FSD>
 ): React.ReactElement => {
     const [showColor, setShowColor] = React.useState<undefined | Element>()
@@ -74,6 +76,7 @@ export const FlowToolbarEditIconBase = <FSD extends FlowStateDataScopes>(
         open={open}
         anchorEl={showEdit || undefined}
         keepMounted={false}
+        container={containerRef?.current}
         onClose={() => {
             setShowEdit(undefined)
             window.setTimeout(() => onClose && onClose(), 10)

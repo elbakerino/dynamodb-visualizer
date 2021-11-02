@@ -57,7 +57,15 @@ const colorMaps = {
     flow_box: flowBoxContentColorMap,
 }
 
-export const DesignerEntities: React.ComponentType<{ activeTable: string | undefined }> = ({activeTable}) => {
+export const DesignerEntities: React.ComponentType<{
+    activeTable: string | undefined
+    contentContainerRef: React.MutableRefObject<HTMLDivElement | null>
+}> = (
+    {
+        activeTable,
+        contentContainerRef,
+    }
+) => {
     const {tableDetails, save} = useDynamoTables()
     const table = activeTable ? tableDetails.get(activeTable) : undefined
     const tableEntities = table?.entities
@@ -90,6 +98,7 @@ export const DesignerEntities: React.ComponentType<{ activeTable: string | undef
             <FlowContextProvider<DesignerFlowStateDataScopes>
                 update={setFlowState}
                 flowState={flowState}
+                container={contentContainerRef}
             >
                 <FlowToolbarProvider>
                     <FlowToolbar

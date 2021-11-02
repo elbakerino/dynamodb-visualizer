@@ -1,7 +1,8 @@
 import React, { memo } from 'react'
 import { ExplorerTableHandlerSave } from '../../feature/DynamoTables'
 import { FlowToolbarNode } from './Toolbars/FlowToolbarNode'
-import { FlowToolbarPane } from './Toolbars/FlowToolbarPane'
+import { FlowToolbarPane, FlowToolbarPaneHistory } from './Toolbars/FlowToolbarPane'
+import { FlowToolbarSave } from './Toolbars/FlowToolbarSave'
 
 const FlowToolbarBase: React.ComponentType<{
     activeTable: string | undefined
@@ -12,10 +13,15 @@ const FlowToolbarBase: React.ComponentType<{
       }) => {
     return <>
         <FlowToolbarNode/>
-        <FlowToolbarPane
+
+        <FlowToolbarSave
             activeTable={activeTable}
             save={save}
         />
+
+        <FlowToolbarPaneHistory/>
+
+        <FlowToolbarPane/>
     </>
 }
 

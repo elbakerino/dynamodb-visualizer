@@ -13,8 +13,10 @@ export const FlowToolbarEditLink = <FSD extends FlowStateDataScopes>(
         onClose,
         selectedElement,
         updateView,
+        containerRef,
     }: {
         link: FlowStateView['link'] | undefined
+        containerRef?: React.MutableRefObject<HTMLDivElement | null>
     } & FlowToolbarEditProps<FSD>
 ): React.ReactElement => {
     const [iconUrlInvalid, setIconUrlInvalid] = React.useState<boolean>(false)
@@ -22,6 +24,7 @@ export const FlowToolbarEditLink = <FSD extends FlowStateDataScopes>(
     return <Popover
         open={Boolean(showEdit)}
         anchorEl={showEdit || undefined}
+        container={containerRef?.current}
         onClose={() => {
             setShowEdit(undefined)
             window.setTimeout(() => onClose && onClose(), 10)

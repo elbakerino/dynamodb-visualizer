@@ -181,6 +181,8 @@ export const FlowRenderer = <FSD extends FlowStateDataScopes, FV extends FlowSta
         //onKeyPress={onKeyBoardInteract}
         onKeyDown={onKeyboardInteract}
         tabIndex={-1}
+        minZoom={0.25}
+        maxZoom={3}
 
         //onNodeMouseEnter={e => console.log('mouse enter', e)}
         //onNodeMouseLeave={e => console.log('mouse leave', e)}

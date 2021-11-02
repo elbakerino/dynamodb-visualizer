@@ -1,11 +1,11 @@
 import React, { memo } from 'react'
-import { AppBar, Box, Dialog, DialogActions, DialogContent, FormControl, IconButton, InputLabel, MenuItem, Select, Toolbar, Typography } from '@material-ui/core'
+import { AppBar, Box, Dialog, DialogActions, DialogContent, FormControl, IconButton, InputLabel, MenuItem, Select, Toolbar, Typography, useMediaQuery, useTheme } from '@material-ui/core'
 import IcClose from '@material-ui/icons/Close'
 import Button from '@material-ui/core/Button'
 import { FlowNodeType, FlowStateData } from '../../FlowState/FlowTypes'
 import { DesignerFlowStateDataScopes } from '../DesignerEntities'
 import { useUID } from 'react-uid'
-import { FlowContextActionsType } from '../../FlowState/FlowContext'
+import { FlowContextActionsType, useFlowActions } from '../../FlowState/FlowContext'
 import { EntityIdentification } from './EntityOptions/EntityIdentification'
 import { flowStateNodeSelector, selectFlowState } from '../../FlowState/FlowStateNode'
 import { NodeEntityDataOptions } from './FlowNodeEntity'
@@ -27,10 +27,15 @@ const FlowNodeEntityOptionsBase: React.ComponentType<FlowNodeEntityOptionsProps>
     }
 ) => {
     const uid = useUID()
+    const {container: containerRef} = useFlowActions<DesignerFlowStateDataScopes>()
+    const {breakpoints} = useTheme()
+    const isSm = useMediaQuery(breakpoints.down('sm'))
 
     return <Dialog
         open={open}
         maxWidth={'lg'} fullWidth
+        fullScreen={isSm}
+        container={containerRef?.current}
         TransitionProps={{unmountOnExit: true}}
         onClose={() => setOpen(false)}
         PaperProps={{
@@ -112,13 +117,17 @@ const FlowNodeEntityOptionsBase: React.ComponentType<FlowNodeEntityOptionsProps>
                 </FormControl>
             </Box> : null}
             {rowStrategy === 'single' ? <Box mb={2}>
-                <Box style={{flexShrink: 0}}>
+                <Box mb={2}>
                     <Typography variant={'h4'} component={'h2'}>Entity Identification</Typography>
                     <EntityIdentification
                         type={type}
                         id={id}
                         update={update}
                     />
+                </Box>
+                <Box>
+                    <Typography variant={'h4'} component={'h2'}>Entity Import</Typography>
+                    <Typography variant={'body2'}>Use identified example entries to auto-create the entity properties.</Typography>
                 </Box>
             </Box> : null}
             {rowStrategy === 'virtual' ? <Box mb={2}>

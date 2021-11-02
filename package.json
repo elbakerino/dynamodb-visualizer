@@ -32,6 +32,7 @@
         "react-redux": "^7.2.5",
         "react-router-dom": "^5.2.1",
         "react-scripts": "4.0.3",
+        "react-simple-gestures": "^0.0.1",
         "react-uid": "^2.3.1",
         "react-window": "^1.8.6",
         "redux": "^4.1.1",
@@ -45,8 +46,10 @@
         "deploy": "node -r dotenv/config deploy.js deploy",
         "_start": "cross-env TSC_COMPILE_ON_ERROR=true react-scripts start",
         "start": "react-scripts start",
+        "prebuild": "npm run test-build",
         "build": "react-scripts build",
         "test": "react-scripts test",
+        "test-build": "npm run test -- --coverage --watchAll=false",
         "eject": "react-scripts eject"
     },
     "eslintConfig": {

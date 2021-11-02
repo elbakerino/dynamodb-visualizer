@@ -23,9 +23,9 @@ import { FlowToolbarEditColor } from '../Edits/FlowToolbarEditColor'
 import { FlowToolbarEditLink } from '../Edits/FlowToolbarEditLink'
 import { FlowToolbarEditPointer } from '../Edits/FlowToolbarEditPointer'
 import { FlowToolbarEditIcon } from '../Edits/FlowToolbarEditIcon'
-import { SimpleGesturesProvider, useSimpleGestures } from '../../../lib/SimpleGestures'
+import { useSimpleGestures } from 'react-simple-gestures'
 
-export const FlowToolbarNode: React.ComponentType = () => {
+export const FlowToolbarNode: React.ComponentType<{}> = () => {
     const flowState = useFlowState<FlowStateDataScopes>()
     const [selectedElement, setSelectedElement] = React.useState<undefined | FlowElement>(undefined)
 
@@ -57,13 +57,11 @@ export const FlowToolbarNode: React.ComponentType = () => {
     const {breakpoints} = useTheme()
     const isMd = useMediaQuery(breakpoints.up('md'))
 
-    return <SimpleGesturesProvider minMovementY={50} minMovementX={3}>
-        <FlowToolbarNodeBaseMemo
-            selectedElement={selectedElement}
-            currentView={currentView}
-            isMd={isMd}
-        />
-    </SimpleGesturesProvider>
+    return <FlowToolbarNodeBaseMemo
+        selectedElement={selectedElement}
+        currentView={currentView}
+        isMd={isMd}
+    />
 }
 
 const FlowToolbarNodeBase: React.ComponentType<{
@@ -71,13 +69,15 @@ const FlowToolbarNodeBase: React.ComponentType<{
     selectedElement: undefined | FlowElement
     isMd: boolean,
     currentView: (FlowStateView & FlowStateViewInternalOnly) | undefined
-}> = ({
-          currentView,
-          selectedElement,
-          isMd,
-      }) => {
-    const {handler, addListener} = useSimpleGestures()
-    const [tagClicked, setTagClicked] = React.useState<boolean>(false)
+}> = (
+    {
+        currentView,
+        selectedElement,
+        isMd,
+    }
+) => {
+    const {handler, addListener} = useSimpleGestures({minMovementX: 3, minMovementY: 50})
+    const [sideTagClicked, setSideTagClicked] = React.useState<boolean>(false)
     const [colorPickerId, setColorPickerId] = React.useState<undefined | Element>()
     const [showEditColor, setShowEditColor] = React.useState<undefined | Element>()
     const [showEditIcon, setShowEditIcon] = React.useState<undefined | Element>()
@@ -88,7 +88,10 @@ const FlowToolbarNodeBase: React.ComponentType<{
     const btnPointerRef = React.useRef(null)
     const {palette} = useTheme()
     const [isOnNavBar, setIsOnNavBar] = React.useState(false)
-    const {updateView} = useFlowActions<FlowStateDataScopes>()
+    const {
+        container: containerRef,
+        updateView,
+    } = useFlowActions<FlowStateDataScopes>()
 
     const onCloseColor = React.useCallback(() => setIsOnNavBar(false), [setIsOnNavBar])
 
@@ -99,18 +102,18 @@ const FlowToolbarNodeBase: React.ComponentType<{
     const hasSelected = Boolean(selectedElement)
     React.useEffect(() => {
         if(!hasSelected) {
-            setTagClicked(false)
+            setSideTagClicked(false)
         }
     }, [hasSelected])
 
     React.useEffect(() => {
         const unsub = addListener('move', (evt) => {
             if(evt.dir === 'right' && evt.posMovedX > 50 && evt.mPxPerMsX > 200) {
-                setTagClicked(true)
+                setSideTagClicked(true)
             }
         })
         return () => unsub()
-    }, [addListener, setTagClicked])
+    }, [addListener, setSideTagClicked])
 
     return <>
         <div
@@ -124,41 +127,43 @@ const FlowToolbarNodeBase: React.ComponentType<{
                 //background: 'pink'
             }}
             {...handler}
-        />
-        {isMd || (!isOnNavBar && !selectedElement) ? null : <Button
-            style={{
-                width: 7,
-                height: 80,
-                position: 'absolute',
-                left: tagClicked ? '-100%' : 0,
-                transition: '0.35s ease-in left',
-                top: 25,
-                zIndex: 3,
-                padding: 0,
-                minWidth: 0,
-                display: 'block',
-            }}
-            variant={'contained'}
-            color={'primary'}
-            onClick={() => setTagClicked(c => !c)}
-        />}
+        >
+            {isMd || (!isOnNavBar && !selectedElement) ? null : <Button
+                style={{
+                    width: 7,
+                    height: 80,
+                    position: 'absolute',
+                    left: sideTagClicked ? '-100%' : 0,
+                    transition: '0.35s ease-in left',
+                    top: 25,
+                    zIndex: 3,
+                    padding: 0,
+                    minWidth: 0,
+                    display: 'block',
+                }}
+                variant={'contained'}
+                color={'primary'}
+                onClick={() => setSideTagClicked(c => !c)}
+            />}
+        </div>
+
         <Paper
             onMouseEnter={() => setIsOnNavBar(true)}
             onMouseLeave={() => setIsOnNavBar(false)}
-            elevation={isOnNavBar ? 2 : 0}
+            elevation={isOnNavBar || !isMd ? 2 : 0}
             style={{
                 display: 'flex',
                 position: 'absolute',
                 alignItems: 'flex-start',
-                background: isOnNavBar ? palette.background.paper : 'transparent',
+                background: isOnNavBar || (!isMd && sideTagClicked) ? palette.background.paper : 'transparent',
                 transition: '0.32s ease-out background, 0.32s ease-out opacity, 0.25s ease-out left',
-                opacity: isOnNavBar ? 0.9 : selectedElement ? 0.5 : 0,
+                opacity: isOnNavBar || (!isMd && sideTagClicked) ? 0.9 : selectedElement ? 0.5 : 0,
                 pointerEvents: isOnNavBar || selectedElement ? 'all' : 'none',
                 zIndex: 2,
                 top: '5%',
                 scrollbarWidth: 'none',
                 bottom: '15%',
-                left: isMd ? 10 : tagClicked ? 5 : '-100%',
+                left: isMd ? 10 : sideTagClicked ? 5 : '-100%',
                 overflowY: 'auto',
                 overflowX: 'hidden',
             }}
@@ -290,6 +295,7 @@ const FlowToolbarNodeBase: React.ComponentType<{
                     onClose={onCloseColor}
                     selectedElement={selectedElement}
                     updateView={updateView}
+                    containerRef={containerRef}
                 />
                 <FlowToolbarEditLink
                     link={currentView?.link}
@@ -298,6 +304,7 @@ const FlowToolbarNodeBase: React.ComponentType<{
                     onClose={() => setIsOnNavBar(false)}
                     selectedElement={selectedElement}
                     updateView={updateView}
+                    containerRef={containerRef}
                 />
                 <FlowToolbarEditPointer
                     pointer={currentView?.pointer}
@@ -306,6 +313,7 @@ const FlowToolbarNodeBase: React.ComponentType<{
                     onClose={() => setIsOnNavBar(false)}
                     selectedElement={selectedElement}
                     updateView={updateView}
+                    containerRef={containerRef}
                 />
                 <FlowToolbarEditIcon
                     icon={currentView?.icon}
@@ -314,6 +322,7 @@ const FlowToolbarNodeBase: React.ComponentType<{
                     onClose={() => setIsOnNavBar(false)}
                     selectedElement={selectedElement}
                     updateView={updateView}
+                    containerRef={containerRef}
                 />
             </Box>
         </Paper>

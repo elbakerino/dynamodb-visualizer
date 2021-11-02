@@ -24,6 +24,7 @@ export const DynamoTableDesigner = (
     const {id} = useExplorerContext()
     const {tableDetails} = useDynamoTables()
     const history = useHistory()
+    const contentContainerRef = React.useRef<null | HTMLDivElement>(null)
     const configSection = match?.params?.configSection
     const table = activeTable ? tableDetails.get(activeTable) : undefined
 
@@ -77,11 +78,23 @@ export const DynamoTableDesigner = (
         {table && configSection ?
             <Box
                 mx={configSection === 'entities' ? 0 : 2}
-                style={{display: 'flex', flexDirection: 'column', overflow: 'auto', flexGrow: 1, position: 'relative'}}
+                style={{
+                    display: 'flex', flexDirection: 'column',
+                    overflowY: 'auto',
+                    // todo: check why this is needed for correct toolbar-side-flick,
+                    //      without hidden the right side-tag adds scroll area
+                    overflowX: 'hidden',
+                    flexGrow: 1, position: 'relative'
+                }}
+                // @ts-ignore
+                ref={contentContainerRef}
             >
                 {configSection === 'schema' ? <DesignerSchema activeTable={activeTable}/> : null}
                 {configSection === 'example-data' ? <DesignerExampleData activeTable={activeTable}/> : null}
-                {configSection === 'entities' ? <DesignerEntities activeTable={activeTable}/> : null}
+                {configSection === 'entities' ? <DesignerEntities
+                    activeTable={activeTable}
+                    contentContainerRef={contentContainerRef}
+                /> : null}
             </Box> : null}
         {loading === 2 && !table ? <Alert severity={'error'}>Table not found.</Alert> : null}
     </Box>

@@ -11,6 +11,7 @@ import { duplicateNode } from './ActionHandler/duplicateNode'
 export interface FlowContextProps<FSD extends FlowStateDataScopes, FV extends FlowStateView = FlowStateView, FS extends FlowState<FSD, FV> = FlowState<FSD, FV>, FST extends FlowStateType<FSD, FV, FS> = FlowStateType<FSD, FV, FS>> {
     update: React.Dispatch<React.SetStateAction<FST>>
     flowState: FST
+    container?: React.MutableRefObject<HTMLDivElement | null>
 }
 
 export interface FlowContextActionsType<FSD extends FlowStateDataScopes, FV extends FlowStateView = FlowStateView, FS extends FlowState<FSD, FV> = FlowState<FSD, FV>> {
@@ -57,6 +58,7 @@ export interface FlowContextActionsType<FSD extends FlowStateDataScopes, FV exte
         id: string,
         toDataScope: K2
     ) => void
+    container?: React.MutableRefObject<HTMLDivElement | null>
 }
 
 // @ts-ignore
@@ -74,6 +76,7 @@ export const FlowContextProvider = <FSD extends FlowStateDataScopes, FV extends 
         children,
         update: updateState,
         flowState,
+        container,
     }: React.PropsWithChildren<FlowContextProps<FSD, FV, FS, FST>>
 ): React.ReactElement => {
     const deleteByIdFn: FlowContextActionsType<FSD, FV, FS>['deleteById'] = React.useCallback((a, b, c, d, e, f) => {
@@ -142,6 +145,7 @@ export const FlowContextProvider = <FSD extends FlowStateDataScopes, FV extends 
         updateView,
         duplicate,
         duplicateAll,
+        container,
     }), [
         update,
         deleteByIdFn,
@@ -149,6 +153,7 @@ export const FlowContextProvider = <FSD extends FlowStateDataScopes, FV extends 
         updateView,
         duplicate,
         duplicateAll,
+        container,
     ])
 
     return <FlowContextActions.Provider value={ctx}>

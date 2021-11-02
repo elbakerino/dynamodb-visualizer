@@ -18,13 +18,16 @@ export const FlowToolbarEditPointer = <FSD extends FlowStateDataScopes>(
         onClose,
         selectedElement,
         updateView,
+        containerRef,
     }: {
         pointer: FlowStateView['pointer'] | undefined
+        containerRef?: React.MutableRefObject<HTMLDivElement | null>
     } & FlowToolbarEditProps<FSD>
 ): React.ReactElement => {
     return <Popover
         open={Boolean(showEdit)}
         anchorEl={showEdit || undefined}
+        container={containerRef?.current}
         onClose={() => {
             setShowEdit(undefined)
             window.setTimeout(() => onClose && onClose(), 10)

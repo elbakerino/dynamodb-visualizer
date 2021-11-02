@@ -210,8 +210,13 @@ const EntityIdentificationRuleBase = <I extends 'pk' | 'sk' = 'pk' | 'sk'>(
                             <MenuItem value={'>'}>&gt;</MenuItem>
                             <MenuItem value={'<='}>&lt;=</MenuItem>
                             <MenuItem value={'>='}>&gt;=</MenuItem>
-                            <MenuItem value={'begins_with'}>BEGINS_WITH</MenuItem>
+                            <MenuItem value={'begins_with'}>BEGINS WITH</MenuItem>
+                            <MenuItem value={'ends_with'}>ENDS WITH</MenuItem>
                             <MenuItem value={'contains'}>CONTAINS</MenuItem>
+                            <MenuItem value={'exists'}>EXISTS</MenuItem>
+                            <MenuItem value={'not_exists'}>NOT EXISTS</MenuItem>
+                            <MenuItem value={'empty'}>EMPTY</MenuItem>
+                            <MenuItem value={'not_empty'}>NOT EMPTY</MenuItem>
                             {/*<MenuItem value={'regex'}>regex</MenuItem>*/}
                         </Select>
                     </FormControl>

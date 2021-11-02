@@ -19,10 +19,12 @@ export const FlowToolbarEditColorBase = <FSD extends FlowStateDataScopes>(
         selectedElement,
         updateView,
         colorMapId = 'flow_box',
+        containerRef,
     }: {
         color?: string
         outline?: boolean
         colorMapId?: string
+        containerRef?: React.MutableRefObject<HTMLDivElement | null>
     } & FlowToolbarEditProps<FSD>
 ): React.ReactElement => {
     const {palette, typography} = useTheme()
@@ -36,6 +38,7 @@ export const FlowToolbarEditColorBase = <FSD extends FlowStateDataScopes>(
             setShowEdit(undefined)
             window.setTimeout(() => onClose && onClose(), 10)
         }}
+        container={containerRef?.current}
         anchorOrigin={{
             vertical: 'center',
             horizontal: 'right',
