@@ -7,9 +7,8 @@ import { useExplorerContext } from '../feature/ExplorerContext'
 export const DynamoTables = () => {
     const {id} = useExplorerContext()
     const history = useHistory()
-    const {list, create, tables, tableDetails} = useDynamoTables()
+    const {list, create, tables} = useDynamoTables()
     const [newName, setNewName] = React.useState('')
-    console.log('tables', tables.toJS(), tableDetails.toJS())
 
     React.useEffect(() => {
         list().then(() => {
@@ -20,20 +19,18 @@ export const DynamoTables = () => {
     }, [list])
 
     return <Box m={2} style={{flexGrow: 1, overflow: 'auto'}}>
-        <Typography variant={'h1'} gutterBottom>
-            Tables Overview
+        <Typography variant={'h1'} gutterBottom style={{marginTop: 12}}>
+            Tables
         </Typography>
 
         <Box mt={1} mb={2}>
-            <Typography variant={'h3'} component={'h2'} gutterBottom>
-                New Table
-            </Typography>
             <TextField
+                placeholder={'Table Name'}
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
             />
             <Button
-                //disabled={Boolean(tables.find(t => t.id === newName)) || newName.trim() === ''}
+                disabled={Boolean(tables.find(t => t.name === newName)) || newName.trim() === ''}
                 onClick={() => {
                     //updateTables({id: newName}, newName)
                     create(newName).then(res => {
@@ -42,14 +39,10 @@ export const DynamoTables = () => {
                         }
                     })
                 }}
-            >add</Button>
+            >create</Button>
         </Box>
 
         <Box style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-start'}}>
-            <Typography variant={'h3'} component={'h2'} gutterBottom>
-                Tables
-            </Typography>
-
             <List dense style={{width: '100%'}}>
                 {tables.map(table => <ListItem
                     key={table.uuid} button

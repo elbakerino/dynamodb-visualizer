@@ -1,10 +1,12 @@
-export function fetcher(url: string, method: 'GET' | 'POST' | 'PUT' | 'DELETE', data?: any, token?: string): Promise<{ status: number, data: any }> {
+export function fetcher(url: string, method: 'GET' | 'POST' | 'PUT' | 'DELETE', data?: any, token?: string, headers?: HeadersInit,): Promise<{ status: number, data: any }> {
     return fetch(url, {
         method: method,
         ...(data && (method === 'PUT' || method === 'POST') ? {body: JSON.stringify(data)} : {}),
         headers: {
-            ...((method === 'PUT' || method === 'POST') ? {'Content-Type': 'application/json'} : {}),
+            //...((method === 'PUT' || method === 'POST') ? {'Content-Type': 'application/json'} : {}),
+            'Content-Type': 'application/json',
             ...(token ? {'Authorization': 'Bearer ' + token} : {}),
+            ...(headers || {}),
         }
     })
         .then(async(r) => {

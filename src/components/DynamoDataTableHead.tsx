@@ -1,7 +1,8 @@
 import { IconButton, TableCell, TableHead, TableRow, useTheme } from '@material-ui/core'
 import React, { memo } from 'react'
 import IcVisibilityOff from '@material-ui/icons/VisibilityOff'
-import { DynamoDbIndex, ParsedDataResult } from './DynamoDataTable'
+import { ParsedDataResult } from './DynamoDataTable'
+import { DynamoDbKeyIndex } from '../feature/DynamoTables'
 
 const DataTableHeadCellBase: React.ComponentType<{
     name: string | undefined
@@ -41,7 +42,7 @@ const StyledHead: React.ComponentType<React.PropsWithChildren<{}>> = ({children}
 
 const HeadGenericKeysBase: React.ComponentType<{
     displayKeys: ParsedDataResult['displayKeys'] | undefined
-    index: [DynamoDbIndex] | [DynamoDbIndex, DynamoDbIndex] | undefined
+    index: [DynamoDbKeyIndex] | [DynamoDbKeyIndex, DynamoDbKeyIndex] | undefined
     toggleDisplayKeys: (key: string) => void
 }> = ({displayKeys, toggleDisplayKeys, index}) => {
     displayKeys = displayKeys?.filter((k: string) =>
@@ -71,7 +72,7 @@ const DataTableHeadBase = (
         toggleDisplayKeys,
     }: {
         parsedData: ParsedDataResult | undefined
-        index: [DynamoDbIndex] | [DynamoDbIndex, DynamoDbIndex] | undefined
+        index: [DynamoDbKeyIndex] | [DynamoDbKeyIndex, DynamoDbKeyIndex] | undefined
         toggleDisplayKeys: (key: string) => void
         setOpenSidebar: (key: string | ((key: string | undefined) => string | undefined)) => void
     }

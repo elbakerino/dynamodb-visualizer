@@ -15,6 +15,7 @@ export interface ExplorerContextConnection {
 
 export interface ExplorerContextType {
     id: string | undefined
+    init: boolean
     connection: ExplorerContextConnection
 }
 
@@ -29,7 +30,7 @@ export interface ExplorerActions {
     logout: (endpoint: string) => void
     logoutFromAll: () => void
     setActive: (endpoint: string | undefined) => void
-    createUser: (email: string, password: string) => Promise<void>
+    createUser: (email: string, password: string) => Promise<boolean>
 }
 
 // @ts-ignore
@@ -47,7 +48,7 @@ const ExplorerContextProviderBase: React.ComponentType<React.PropsWithChildren<{
     const searchParams = parseParams(location.search)
     const explorerParam = searchParams['explorer'] ? decodeURIComponent(searchParams['explorer']) : undefined
     const [nextId, setNextId] = React.useState<string>(explorerParam || '')
-    const [explorerContextValue, setExplorerContext] = React.useState<ExplorerContextType>({connection: {}, id: undefined})
+    const [explorerContextValue, setExplorerContext] = React.useState<ExplorerContextType>({connection: {}, id: undefined, init: false})
     const {replace} = useHistory()
     const {id, connection} = explorerContextValue
 
@@ -128,7 +129,6 @@ const ExplorerContextProviderBase: React.ComponentType<React.PropsWithChildren<{
     }, [explorerParam, setNextId])
 
     React.useEffect(() => {
-        console.log('nextId',nextId)
         if(nextId) {
             const cachedToken = getToken(nextId)
             const decoded = cachedToken?.token ? jwtDecode(cachedToken?.token) as { exp: number } : undefined
@@ -137,17 +137,21 @@ const ExplorerContextProviderBase: React.ComponentType<React.PropsWithChildren<{
                     ...(ctx.id === nextId ? ctx.connection : {}),
                     ...(cachedToken ? {
                         auth: cachedToken,
-                        expire: (decoded as { exp: number }).exp || undefined
+                        expire: decoded?.exp || undefined
                     } : {}),
                 },
+                init: true,
                 id: nextId,
             }))
-            console.log(rebuildSearch('explorer', encodeURIComponent(nextId), locationRef.current?.search || ''))
             replace({
                 search: rebuildSearch('explorer', encodeURIComponent(nextId), locationRef.current?.search || ''),
             })
         } else {
-            setExplorerContext({connection: {}, id: undefined})
+            setExplorerContext({
+                connection: {},
+                id: undefined,
+                init: true,
+            })
             replace({
                 search: rebuildSearch('explorer', undefined, locationRef.current?.search || ''),
             })
@@ -157,7 +161,7 @@ const ExplorerContextProviderBase: React.ComponentType<React.PropsWithChildren<{
     const expires = connection?.expire
     const token = connection?.auth?.token
     React.useEffect(() => {
-        if(!expires) return
+        if(!expires || !id) return
 
         let timer: number | undefined
         const now = Number((Date.now() / 1000).toFixed(0))
@@ -167,7 +171,14 @@ const ExplorerContextProviderBase: React.ComponentType<React.PropsWithChildren<{
             fetcher(id + '/token', 'GET', undefined, token)
                 .then(res => {
                     if(res.status === 200 && res.data?.token) {
-                        const decoded = res.data?.token ? jwtDecode(res.data.token) as { exp: number } : undefined
+                        const decoded = res.data?.token ? jwtDecode(res.data.token) as { exp: number, uid: string } : undefined
+                        if(decoded) {
+                            const nextToken = {
+                                token: res.data.token,
+                                user: decoded.uid,
+                            }
+                            window.localStorage.setItem('auth_explorer_ep__' + encodeURIComponent(id), JSON.stringify(nextToken))
+                        }
                         setExplorerContext(ctx => ({
                             ...ctx,
                             connection: {
@@ -190,6 +201,7 @@ const ExplorerContextProviderBase: React.ComponentType<React.PropsWithChildren<{
                             expire: undefined,
                         },
                         id: id,
+                        init: true,
                     })
                 })
         }, secondsLeft * 1000)
@@ -201,8 +213,13 @@ const ExplorerContextProviderBase: React.ComponentType<React.PropsWithChildren<{
             email, password
         })
             .then(res => {
+                if(res.status === 200) {
+                    return true
+                }
+                return false
             })
             .catch(e => {
+                return false
             })
     }, [id])
 

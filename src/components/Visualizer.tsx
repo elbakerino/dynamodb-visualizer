@@ -1,7 +1,7 @@
 import React from 'react'
 import { Route, Switch } from 'react-router-dom'
 import { DynamoTables } from './DynamoTables'
-import { DynamoTablePage } from './DynamoTablePage'
+import { PageDynamoTable } from './PageDynamoTable'
 import { DynamoExplorers } from './DynamoDataTable'
 import { ExplorerEndpoints } from './ExplorerEndpoints'
 import { useExplorerContext } from '../feature/ExplorerContext'
@@ -28,15 +28,13 @@ export const getLocalExplorers = (): DynamoExplorers => {
 
 export const Visualizer = (
     {
-        setActiveTable,
-        setTableAction,
         explorers, setExplorers,
+        setShowOnboarding,
     }:
         {
-            setActiveTable: (table: string | undefined) => void
-            setTableAction: (table: string | undefined) => void
             explorers: DynamoExplorers
             setExplorers: React.Dispatch<React.SetStateAction<DynamoExplorers>>
+            setShowOnboarding: React.Dispatch<React.SetStateAction<number>>
         }
 ) => {
     const {setActive, id} = useExplorerContext()
@@ -59,6 +57,7 @@ export const Visualizer = (
                 setExplorers={setExplorers}
                 activeExplorer={id}
                 setActiveExplorer={setActive}
+                setShowOnboarding={setShowOnboarding}
             />
         </Route>
         <Route path="/tables" exact>
@@ -69,11 +68,7 @@ export const Visualizer = (
         </Route>
         <Route path="/table/:tableId/:tableAction?"
                render={({match}) =>
-                   <DynamoTablePage
-                       setActiveTable={setActiveTable}
-                       setTableAction={setTableAction}
-                       match={match}
-                   />
+                   <PageDynamoTable match={match}/>
                }
         />
     </Switch>

@@ -81,11 +81,11 @@ export const UserProfile: React.ComponentType<{}> = () => {
                 }}>Get Token</Button>
                 {tmpToken ? <Box my={1}>
                     <Typography variant={'subtitle1'} style={{marginBottom: 0}}>Token:</Typography>
-                    <Typography variant={'body2'}>
-                <pre style={{
-                    margin: 0, whiteSpace: 'break-spaces',
-                    wordBreak: 'break-all',
-                }}><code>{tmpToken?.token}</code></pre>
+                    <Typography variant={'body2'} component={'div'}>
+                        <pre style={{
+                            margin: 0, whiteSpace: 'break-spaces',
+                            wordBreak: 'break-all',
+                        }}><code>{tmpToken?.token}</code></pre>
                     </Typography>
                     {tmpToken?.expire ? <Typography variant={'caption'} style={{marginBottom: 0}}>Expires: {new Date(tmpToken.expire * 1000).toLocaleString()}</Typography> : null}
                 </Box> : null}

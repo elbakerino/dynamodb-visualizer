@@ -11,17 +11,19 @@ import { Provider as ReduxProvider } from 'react-redux'
 import { reducers } from './feature/reducers'
 import { LoginBox } from './components/User/LoginBox'
 import { DynamoExplorers } from './components/DynamoDataTable'
+import { Icon1Provider } from './lib/Icon1Provider'
+import { PageDynamoTableProvider } from './components/PageDynamoTable'
 
-const theme = customTheme('#451bba')
+//const theme = customTheme('#451bba')
+const theme = customTheme('#4f2ab5')
+//const theme = customTheme('#6431f7')
 
 const ThemedAppBase = (
     {setThemeId}:
         { setThemeId: (updater: (themeId: 'dark' | 'light') => 'dark' | 'light') => void }
 ) => {
     const [openLogin, setOpenLogin] = React.useState<boolean>(false)
-    const [activeTable, setActiveTable] = React.useState<string | undefined>(undefined)
-    const [tableAction, setTableAction] = React.useState<string | undefined>(undefined)
-
+    const [showOnboarding, setShowOnboarding] = React.useState<number>(0)
     const [explorers, setExplorers] = React.useState<DynamoExplorers>(() => getLocalExplorers())
 
     const updateExplorers: React.Dispatch<React.SetStateAction<DynamoExplorers>> = React.useCallback((explorers) => {
@@ -39,27 +41,29 @@ const ThemedAppBase = (
 
     return <Router>
         <ExplorerContextProvider setOpenLogin={setOpenLogin}>
-            <ReduxProvider store={store}>
-                <CssBaseline/>
-                <Layout
-                    activeTable={activeTable}
-                    tableAction={tableAction}
-                    setThemeId={setThemeId}
-                    setOpenLogin={setOpenLogin}
-                    explorers={explorers}
-                >
-                    <Visualizer
-                        setActiveTable={setActiveTable}
-                        setTableAction={setTableAction}
+            <PageDynamoTableProvider initialState={{}}>
+                <ReduxProvider store={store}>
+                    <CssBaseline/>
+                    <Layout
+                        setThemeId={setThemeId}
+                        setOpenLogin={setOpenLogin}
                         explorers={explorers}
-                        setExplorers={updateExplorers}
+                        showOnboarding={showOnboarding}
+                        setShowOnboarding={setShowOnboarding}
+                    >
+                        <Visualizer
+                            explorers={explorers}
+                            setExplorers={updateExplorers}
+                            setShowOnboarding={setShowOnboarding}
+                        />
+                    </Layout>
+                    <LoginBox
+                        setShowOnboarding={setShowOnboarding}
+                        onClose={() => setOpenLogin(false)}
+                        open={openLogin}
                     />
-                </Layout>
-                <LoginBox
-                    onClose={() => setOpenLogin(false)}
-                    open={openLogin}
-                />
-            </ReduxProvider>
+                </ReduxProvider>
+            </PageDynamoTableProvider>
         </ExplorerContextProvider>
     </Router>
 }
@@ -67,7 +71,6 @@ const ThemedAppBase = (
 const ThemedApp = memo(ThemedAppBase)
 
 const store = createStore(reducers, Map())
-
 
 function App() {
     const [themeId, setThemeId] = React.useState<'dark' | 'light'>('dark')
@@ -79,7 +82,9 @@ function App() {
 
     return (
         <MuiThemeProvider theme={t}>
-            <ThemedApp setThemeId={setThemeId}/>
+            <Icon1Provider>
+                <ThemedApp setThemeId={setThemeId}/>
+            </Icon1Provider>
         </MuiThemeProvider>
     )
 }

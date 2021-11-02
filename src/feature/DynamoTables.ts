@@ -3,8 +3,10 @@ import { useExplorerContext } from './ExplorerContext'
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { List, Map } from 'immutable'
-import { DynamoDbIndex } from '../components/DynamoDataTable'
 import { ColorizeRulesetType } from '../components/DataTableSidebar/Colorize'
+import { FlowNodeStateData, FlowState } from '../components/FlowState/FlowTypes'
+import { DesignerFlowStateDataScopes } from '../components/Designer/DesignerEntities'
+import { FlowLayerList } from '../components/FlowState/buildLayerList'
 
 export interface ExplorerTableType {
     uuid: string
@@ -15,40 +17,70 @@ export interface ExplorerTableType {
     table_schema_name?: string
 }
 
+export interface DynamoDbKeyIndex {
+    AttributeName: string
+    KeyType: string
+}
+
 export type DynamoDbAttributeType = 'S' | 'SS' | 'N' | 'M' | 'L' | 'B' | 'BOOL' | 'BS' | 'NS' | 'NULL'
+
+export interface DynamoDbInspectResult {
+    '@metadata'?: {
+        effectiveUri?: string
+    }
+    Table?: DynamoDbSchemaTable
+}
 
 export interface ExplorerTableSchemaType {
     uuid: string
     created_at: string
     updated_at: string
     data_key: string
-    schema: {
-        '@metadata'?: {
-            effectiveUri?: string
-        }
-        Table?: {
-            TableName?: string
-            KeySchema?: [DynamoDbIndex] | [DynamoDbIndex, DynamoDbIndex]
-            GlobalSecondaryIndexes?: {
-                IndexName?: string
-                KeySchema?: [DynamoDbIndex] | [DynamoDbIndex, DynamoDbIndex]
-            }[]
-            AttributeDefinitions?: {
-                Items?: {
-                    AttributeName: string
-                    AttributeType: DynamoDbAttributeType
-                }[]
-            }
-        }
-    }
+    schema: DynamoDbInspectResult
 }
 
-export interface DynamoDbAttribute {
+export interface DynamoDbGlobalSecondaryIndex {
+    IndexName?: string
+    KeySchema?: [DynamoDbKeyIndex] | [DynamoDbKeyIndex, DynamoDbKeyIndex]
+}
+
+export interface DynamoDbSchemaTable {
+    TableName?: string
+    KeySchema?: [DynamoDbKeyIndex] | [DynamoDbKeyIndex, DynamoDbKeyIndex]
+    GlobalSecondaryIndexes?: DynamoDbGlobalSecondaryIndex[]
+    AttributeDefinitions?: {
+        AttributeName: string
+        AttributeType: DynamoDbAttributeType
+    }[]
+    // AttributeDefinitions?: {
+    //     Items?: {
+    //         AttributeName: string
+    //         AttributeType: DynamoDbAttributeType
+    //     }[]
+    // }
+}
+
+// todo: add all options
+export interface DynamoDbAttributeS {
     S: string
 }
 
-export interface DynamoDbAttributes {
+export interface DynamoDbAttributeN {
+    N: string
+}
+
+export interface DynamoDbAttributeM {
+    M: DynamoDbItem
+}
+
+export type DynamoDbAttribute = DynamoDbAttributeS | DynamoDbAttributeN | DynamoDbAttributeM
+
+export interface DynamoDbItem {
     [k: string]: DynamoDbAttribute
+}
+
+export interface DynamoDbScanResult {
+    Items: DynamoDbItem[]
 }
 
 export interface ExplorerTableExampleDataType {
@@ -56,7 +88,7 @@ export interface ExplorerTableExampleDataType {
     created_at: string
     updated_at: string
     data_key: string
-    example_items?: { Items: DynamoDbAttributes[] }
+    example_items?: DynamoDbScanResult
 }
 
 export interface ExplorerTablePresetType {
@@ -78,12 +110,27 @@ export interface ExplorerTableColorType {
 
 export type ExplorerTablePresetsType = ExplorerTablePresetType[]
 
-export interface ExplorerTableHierarchicalType {
+export interface ExplorerTableHierarchicalType<FSD extends DesignerFlowStateDataScopes = DesignerFlowStateDataScopes> {
     meta: ExplorerTableType
     schema?: ExplorerTableSchemaType
     exampleData?: ExplorerTableExampleDataType
     presets?: ExplorerTablePresetsType
     colors?: ExplorerTableColorType[]
+    entities?: {
+        entity_definitions: {
+            [id: string]: FlowNodeStateData<FSD['entity']>
+        }
+        flow_cards: {
+            [key in keyof Omit<FSD, 'entity'>]: FlowNodeStateData<Omit<FSD, 'entity'>[keyof Omit<FSD, 'entity'>]>
+        }
+        flow_view: FlowState<FSD>['view']
+        flow_connections: FlowState<FSD>['connections']
+        flow_layers: FlowLayerList
+    }
+}
+
+export interface ExplorerTableEntity {
+    id: string
 }
 
 export interface ExplorerTableContext {
@@ -92,12 +139,13 @@ export interface ExplorerTableContext {
 }
 
 export type ExplorerTableHandlerList = () => Promise<void>
-export type ExplorerTableHandlerDetails = (uuid: string) => Promise<boolean>
+export type ExplorerTableHandlerDetails = (uuid: string) => Promise<number>
 export type ExplorerTableHandlerCreate = (name: string) => Promise<boolean>
 export type ExplorerTableHandlerSave = (uuid: string, data: Partial<{
     name: ExplorerTableType['name']
     schema: ExplorerTableSchemaType['schema']
     exampleData: ExplorerTableExampleDataType['example_items']
+    entities: ExplorerTableHierarchicalType['entities']
 }>) => Promise<boolean>
 export type ExplorerTableHandlerSavePreset = (tableUuid: string, presetName: string, data: Pick<ExplorerTablePresetType, 'display_keys'>) => Promise<boolean>
 export type ExplorerTableHandlerSaveColor = (tableUuid: string, colorName: string, data: Pick<ExplorerTableColorType, 'color_pk' | 'color_sk'>) => Promise<boolean>
@@ -161,7 +209,6 @@ export const reducersExplorerTables = (
         case 'explorer_tables.clear':
             return {...explorerTableContextDefault}
         case 'explorer_tables.list':
-            console.log('action.list', action.list)
             return {
                 ...state,
                 tables: List(action.list.sort((a, b) => a.uuid.localeCompare(b.uuid)))
@@ -203,6 +250,17 @@ export const reducersExplorerTables = (
                             ].sort((a, b) => a.data_key.localeCompare(b.data_key))
                         }
                     })()),
+                    ...((() => {
+                        if(!action.table.entities) return {}
+                        return {
+                            entities: {
+                                entity_definitions: action.table.entities?.entity_definitions || {},
+                                flow_cards: action.table.entities?.flow_cards || {},
+                                flow_view: action.table.entities?.flow_view || {},
+                                flow_connections: action.table.entities?.flow_connections || [],
+                            } as ExplorerTableHierarchicalType['entities']
+                        }
+                    })()),
                 })),
             }
         default:
@@ -211,7 +269,7 @@ export const reducersExplorerTables = (
 }
 
 export const useDynamoTables = (): ExplorerTableContext & ExplorerTableHandler => {
-    const {connection, id} = useExplorerContext()
+    const {connection, id, init} = useExplorerContext()
     const explorerTablesState = useSelector((a: Map<'explorer_tables', ExplorerTableContext> = Map()) => a.get('explorer_tables')) as ExplorerTableContext
 
     const dispatch = useDispatch()
@@ -228,7 +286,6 @@ export const useDynamoTables = (): ExplorerTableContext & ExplorerTableHandler =
                         localList.push(t.meta)
                     }
                 })
-                console.log('list', localList)
             }
 
             dispatch({
@@ -251,6 +308,7 @@ export const useDynamoTables = (): ExplorerTableContext & ExplorerTableHandler =
     }, [id, token, dispatch])
 
     const loadDetails: ExplorerTableHandlerDetails = React.useCallback((uuid) => {
+        if(!init) return Promise.resolve(506)
         if(!id) {
             const listRaw = window.localStorage.getItem('dynamodb_visualizer__tables')
             let details: Partial<ExplorerTableHierarchicalType> | undefined
@@ -263,23 +321,26 @@ export const useDynamoTables = (): ExplorerTableContext & ExplorerTableHandler =
                     uuid: encodeURIComponent(uuid),
                     table: details,
                 } as ExplorerTableActionRead)
-                return Promise.resolve(true)
+                return Promise.resolve(200)
             }
-            return Promise.resolve(false)
+            return Promise.resolve(404)
         }
-        if(!token) return Promise.resolve(false)
+        if(!token) return Promise.resolve(407)
 
         return fetcher(id + '/table/' + uuid, 'GET', undefined, token)
             .then(res => {
                 console.log('fetch table', res)
-                dispatch({
-                    type: 'explorer_tables.read',
-                    uuid: uuid,
-                    table: res.data.table,
-                } as ExplorerTableActionRead)
-                return true
+                if(res.status === 200) {
+                    dispatch({
+                        type: 'explorer_tables.read',
+                        uuid: uuid,
+                        table: res.data.table,
+                    } as ExplorerTableActionRead)
+                    return 200
+                }
+                return res.status
             })
-    }, [id, token, dispatch])
+    }, [id, token, dispatch, init])
 
     const create: ExplorerTableHandlerCreate = React.useCallback((name) => {
         if(!id) {
@@ -346,6 +407,7 @@ export const useDynamoTables = (): ExplorerTableContext & ExplorerTableHandler =
             ...(data?.name ? {name: data.name} : {}),
             ...(data?.schema ? {schema: data.schema} : {}),
             ...(data?.exampleData ? {exampleData: data.exampleData} : {}),
+            ...(data?.entities ? {entities: data.entities} : {}),
         }, token)
             .then(res => {
                 console.log(res)

@@ -2,7 +2,8 @@ import { Table, TableBody, TableCell, TableContainer, TableRow } from '@material
 import React, { memo } from 'react'
 import { ColorizeRule, useColorize } from './DataTableSidebar/Colorize'
 import { DynamoDataTableHead } from './DynamoDataTableHead'
-import { DynamoDbIndex, ParsedDataResult } from './DynamoDataTable'
+import { ParsedDataResult } from './DynamoDataTable'
+import { DynamoDbKeyIndex } from '../feature/DynamoTables'
 
 const DataTableBase = (
     {
@@ -12,7 +13,7 @@ const DataTableBase = (
         fixedWidth,
     }: {
         parsedData: ParsedDataResult | undefined
-        index: [DynamoDbIndex] | [DynamoDbIndex, DynamoDbIndex]
+        index: [DynamoDbKeyIndex] | [DynamoDbKeyIndex, DynamoDbKeyIndex]
         toggleDisplayKeys: (key: string) => void
         setOpenSidebar: (key: string | ((key: string | undefined) => string | undefined)) => void
         fixedWidth: boolean
@@ -23,7 +24,7 @@ const DataTableBase = (
             <DynamoDataTableHead parsedData={parsedData} index={index} toggleDisplayKeys={toggleDisplayKeys} setOpenSidebar={setOpenSidebar}/>
 
             <TableBody>
-                {parsedData && Object.keys(parsedData.sorted).map((pk) =>
+                {parsedData && Object.keys(parsedData.sorted || {}).map((pk) =>
                     <DataTableRowContainer
                         key={pk}
                         pk={pk}
@@ -42,10 +43,10 @@ const DataTableRowContainer: React.ComponentType<{
     pk: string
     sorted: ParsedDataResult['sorted']
     displayKeys: ParsedDataResult['displayKeys']
-    index: [DynamoDbIndex] | [DynamoDbIndex, DynamoDbIndex]
+    index: [DynamoDbKeyIndex] | [DynamoDbKeyIndex, DynamoDbKeyIndex]
 }> = ({pk, sorted, displayKeys, index}) => {
     const colorize = useColorize()
-    const pkColor = getColor(pk, colorize.pk)
+    const pkColor = getNamedColor(pk, colorize.pk)
     return <React.Fragment key={pk}>
         <TableRow>
             <TableCell
@@ -55,10 +56,10 @@ const DataTableRowContainer: React.ComponentType<{
                     overflow: 'hidden',
                     ...(pkColor ? {background: pkColor} : {}),
                 }}
-                rowSpan={(sorted[pk]?.length || 0) + 1}
+                rowSpan={(sorted && sorted[pk] ? sorted[pk].length : 0) + 1}
             >{pk}</TableCell>
         </TableRow>
-        {sorted[pk]?.map((sk: any, i: number) =>
+        {sorted && sorted[pk]?.map((sk: any, i: number) =>
             <DataTableRow
                 key={i}
                 index={index}
@@ -77,7 +78,7 @@ const DataTableRowBase = ({index, sk, pkColor, skRule, displayKeys}) => {
         k !== (index[0] ? index[0].AttributeName : '') && k !== (index[1] ? index[1].AttributeName : '')
     )
     const skVal = index[1] ? Object.values(sk[index[1].AttributeName])[0] as string : undefined
-    const skColor = getColor(skVal, skRule)
+    const skColor = getNamedColor(skVal, skRule)
     return <TableRow
         style={{
             ...(pkColor || skColor ? {background: skColor || pkColor} : {}),
@@ -98,7 +99,7 @@ const DataTableRowBase = ({index, sk, pkColor, skRule, displayKeys}) => {
 }
 const DataTableRow = memo(DataTableRowBase)
 
-function getColor(value: any, rules: ColorizeRule[]) {
+function getNamedColor(value: any, rules: ColorizeRule[]) {
     if(!rules || typeof value === 'undefined') {
         return undefined
     }

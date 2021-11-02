@@ -1,7 +1,8 @@
-import { DynamoDbIndex, ParsedDataResult } from './DynamoDataTable'
+import { ParsedDataResult } from './DynamoDataTable'
+import { DynamoDbKeyIndex } from '../feature/DynamoTables'
 
 export const parseExampleData = (
-    index: [DynamoDbIndex] | [DynamoDbIndex, DynamoDbIndex],
+    index: [DynamoDbKeyIndex] | [DynamoDbKeyIndex, DynamoDbKeyIndex],
     tableItems: any[]
 ) => {
     const sorted: ParsedDataResult['sorted'] = {}

@@ -10,11 +10,12 @@ import { useHistory, useLocation } from 'react-router-dom'
 import Typography from '@material-ui/core/Typography'
 import { DynamoDataTableSidebar } from './DynamoDataTableSidebar'
 import { ColorizeContext, ColorizeRulesetType } from './DataTableSidebar/Colorize'
-import { useDynamoTables } from '../feature/DynamoTables'
+import { DynamoDbKeyIndex, useDynamoTables } from '../feature/DynamoTables'
 import { useExplorerContext } from '../feature/ExplorerContext'
 import { buildSearch, parseParams } from '../lib/SearchParams'
 import { DynamoDataTableContent } from './DynamoDataTableContent'
 import IcColorize from '@material-ui/icons/ColorLens'
+import { usePageTable } from './PageDynamoTable'
 
 export interface DynamoPreset {
     name: string
@@ -30,26 +31,17 @@ export interface DynamoExplorer {
 
 export type DynamoExplorers = DynamoExplorer[]
 
-export interface DynamoDbIndex {
-    AttributeName: string
-    KeyType: string
-}
-
 export interface ParsedDataResult {
-    index: [DynamoDbIndex] | [DynamoDbIndex, DynamoDbIndex]
-    indexName: string | undefined
-    sorted: { [k: string]: { [k2: 'S' | 'N' | string]: string }[] }
-    allKeys: string[]
-    displayKeys: string[]
+    index?: [DynamoDbKeyIndex] | [DynamoDbKeyIndex, DynamoDbKeyIndex]
+    indexName?: string | undefined
+    sorted?: { [k: string]: { [k2: 'S' | 'N' | string]: string }[] }
+    allKeys?: string[]
+    displayKeys?: string[]
+    presetKeys?: string[] | undefined
 }
 
-const DynamoDataTableBase = (
-    {
-        activeTable,
-    }: {
-        activeTable: string | undefined
-    }
-) => {
+const DynamoDataTableBase = () => {
+    const {activeTable} = usePageTable()
     const [ruleSet, setRuleset] = React.useState<ColorizeRulesetType>({pk: [], sk: []})
     const [openSidebar, setOpenSidebar] = React.useState<string | undefined>(undefined)
     const [scanEndpoint, setScanEndpoint] = React.useState<string>('')
@@ -129,12 +121,11 @@ const DynamoDataTableBase = (
 
     React.useEffect(() => {
         if(!presetData) return
-        setParsedData((pd) =>
-            pd ? {
-                ...pd,
-                displayKeys: presetData?.display_keys ? presetData.display_keys : pd.allKeys
-            } : pd
-        )
+        setParsedData((pd) => ({
+            ...(pd || {}),
+            displayKeys: presetData.display_keys ? presetData.display_keys : pd?.allKeys,
+            presetKeys: presetData.display_keys,
+        }))
     }, [presetData, setParsedData])
 
     React.useEffect(() => {
@@ -142,32 +133,42 @@ const DynamoDataTableBase = (
             pk: colorData?.color_pk || [],
             sk: colorData?.color_sk || [],
         }))
-    }, [colorData, setParsedData])
+    }, [colorData, setRuleset])
 
     React.useEffect(() => {
         if(!tableData?.Items || !index) {
-            setParsedData(undefined)
+            //setParsedData(undefined)
             return
         }
-
+        const i = index
+        const ai = activeIndex
+        const items = tableData?.Items
         setParsing(1)
-        setParsedData(undefined)
+        // @ts-ignore
+        setParsedData(pd => ({presetKeys: pd?.presetKeys}))
+        // timeout for: heavy CPU load operation that blocks the setParsing re-rendering
+        const timer = window.setTimeout(() => {
+            const parsed = parseExampleData(i, items)
 
-        const parsed = parseExampleData(index, tableData.Items)
+            const allKeys = parsed.allKeys.sort((a, b) => {
+                return a.localeCompare(b)
+            })
 
-        const allKeys = parsed.allKeys.sort((a, b) => {
-            return a.localeCompare(b)
-        })
+            setParsedData(pd => ({
+                index: i,
+                indexName: ai,
+                sorted: parsed.sorted,
+                allKeys: [...allKeys],
+                displayKeys: pd?.presetKeys ? pd.presetKeys : [...allKeys],
+                presetKeys: pd?.presetKeys,
+            }))
+            setParsing(2)
+        }, 20)
 
-        setParsedData({
-            index: index,
-            indexName: activeIndex,
-            sorted: parsed.sorted,
-            allKeys: [...allKeys],
-            displayKeys: [...allKeys],
-        })
-        setParsing(2)
-
+        return () => {
+            setParsing(0)
+            window.clearTimeout(timer)
+        }
     }, [
         index, activeIndex,
         setParsedData, tableData,
@@ -177,7 +178,7 @@ const DynamoDataTableBase = (
     const toggleDisplayKeys = React.useCallback((key: string) => {
         setParsedData(pd => {
             if(!pd) return pd
-            const dks = [...pd.displayKeys]
+            const dks = [...pd.displayKeys || []]
             const ix = dks.indexOf(key)
             if(typeof ix === 'undefined' || ix === -1) {
                 dks.push(key)

@@ -1,5 +1,6 @@
 import { Box, Button, IconButton, Link, List, ListItem, ListItemSecondaryAction, ListItemText, TextField, Typography } from '@material-ui/core'
 import Alert from '@material-ui/lab/Alert'
+import IcScience from '@material-ui/icons/Science'
 import IcDelete from '@material-ui/icons/Delete'
 import React from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
@@ -14,11 +15,13 @@ export const ExplorerEndpoints = (
         setExplorers,
         activeExplorer,
         setActiveExplorer,
+        setShowOnboarding,
     }: {
         explorers: DynamoExplorers
         setExplorers: React.Dispatch<React.SetStateAction<DynamoExplorers>>
         activeExplorer: string | undefined
         setActiveExplorer: ExplorerActions['setActive']
+        setShowOnboarding: React.Dispatch<React.SetStateAction<number>>
     }
 ) => {
     const {connection} = useExplorerContext()
@@ -154,6 +157,21 @@ export const ExplorerEndpoints = (
                     </ListItemSecondaryAction>
                 </ListItem>)}
             </List>
+
+            {!activeExplorer && explorers.length === 0 ? <>
+                <Button
+                    onClick={() => testApi('https://dynamodb-explorer.bemit.codes')}
+                    style={{textTransform: 'none'}}
+                    size={'large'}
+                    variant={'contained'}
+                    color={'primary'}
+                    startIcon={<IcScience/>}
+                >
+                    Try it out, use the free demo API!
+                </Button>
+                <Typography variant={'body2'} style={{marginTop: 4, marginLeft: 8}}>Experimental State: no warranties given, data may be deleted without further notice.</Typography>
+            </> : null}
+
             {activeExplorer ? <Button onClick={() => setActiveExplorer(undefined)}>switch to browser storage</Button> : null}
         </Box>
     </Box>

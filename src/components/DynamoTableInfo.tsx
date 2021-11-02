@@ -2,14 +2,10 @@ import React from 'react'
 import { DynamoDataTableSecondaryKeys } from './DynamoDataTableSecondaryKeys'
 import { Box, Paper, Typography } from '@material-ui/core'
 import { useDynamoTables } from '../feature/DynamoTables'
+import { usePageTable } from './PageDynamoTable'
 
-export const DynamoTableInfo = (
-    {
-        activeTable,
-    }: {
-        activeTable: string | undefined
-    }
-) => {
+export const DynamoTableInfo = () => {
+    const {activeTable} = usePageTable()
     const {tableDetails} = useDynamoTables()
     const table = activeTable ? tableDetails.get(activeTable) : undefined
     const tableSchema = table?.schema?.schema
