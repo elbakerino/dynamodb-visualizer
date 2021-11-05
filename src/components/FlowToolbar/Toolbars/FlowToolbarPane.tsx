@@ -50,7 +50,10 @@ export const FlowToolbarPaneHistory: React.ComponentType<{}> = () => {
 }
 
 const FlowToolbarPaneBase: React.ComponentType<{}> = () => {
-    const {handler, addListener} = useSimpleGestures({minMovementX: 3, minMovementY: 50})
+    const {handler, addListener} = useSimpleGestures({
+        minMovementX: 3, minMovementY: 50,
+        noMultiTouch: true,
+    })
     const [sideTagClicked, setSideTagClicked] = React.useState<boolean>(false)
     const {zoomIn, zoomOut, zoomTo, setCenter, fitView} = useZoomPanHelper()
     const {updateToolbar, snapToGrid} = useFlowToolbar()
@@ -82,7 +85,7 @@ const FlowToolbarPaneBase: React.ComponentType<{}> = () => {
         >
             {isMd ? null : <Button
                 style={{
-                    width: 7,
+                    width: 9,
                     height: 80,
                     position: 'absolute',
                     right: 0,

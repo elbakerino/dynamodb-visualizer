@@ -76,7 +76,10 @@ const FlowToolbarNodeBase: React.ComponentType<{
         isMd,
     }
 ) => {
-    const {handler, addListener} = useSimpleGestures({minMovementX: 3, minMovementY: 50})
+    const {handler, addListener} = useSimpleGestures({
+        minMovementX: 3, minMovementY: 50,
+        noMultiTouch: true,
+    })
     const [sideTagClicked, setSideTagClicked] = React.useState<boolean>(false)
     const [colorPickerId, setColorPickerId] = React.useState<undefined | Element>()
     const [showEditColor, setShowEditColor] = React.useState<undefined | Element>()
@@ -130,7 +133,7 @@ const FlowToolbarNodeBase: React.ComponentType<{
         >
             {isMd || (!isOnNavBar && !selectedElement) ? null : <Button
                 style={{
-                    width: 7,
+                    width: 9,
                     height: 80,
                     position: 'absolute',
                     left: sideTagClicked ? '-100%' : 0,

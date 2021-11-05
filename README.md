@@ -26,6 +26,8 @@ API Endpoints to persist your work in a DynamoDB table, includes prebuild docker
 
 This project is free software distributed under the [**MIT License**](LICENSE).
 
+> Amazon DynamoDB® is a trademark of Amazon.com, Inc. No endorsements by Amazon.com, Inc. are implied by the use of these marks.
+
 ### Contributors
 
 By committing your code to the code repository you agree to release the code under the MIT License attached to the repository.
