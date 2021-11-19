@@ -4,6 +4,7 @@ import { FlowRenderer, FlowRendererProps } from '../FlowState/FlowRenderer'
 import { FlowState, FlowStateDataScopes, FlowStateType, FlowStateView, FlowStateViewData } from '../FlowState/FlowTypes'
 import { FlowContextProvider } from '../FlowState/FlowContext'
 import { useDynamoTables } from '../../feature/DynamoTables'
+import useTheme from '@material-ui/core/styles/useTheme'
 import { EdgeTypesType } from 'react-flow-renderer'
 import { EdgeInteractive } from '../FlowEdges/EdgeInteractive'
 import { FlowToolbar } from '../FlowToolbar/FlowToolbar'
@@ -12,13 +13,13 @@ import { NodeEntity, NodeEntityData } from './FlowComponents/FlowNodeEntity'
 import { EdgeEntityConnection } from './FlowComponents/EdgeEntityConnection'
 import { buildViewList } from '../FlowState/ActionHandler'
 import { FlowHistoryProvider, useFlowHistoryMaker } from '../FlowState/FlowHistory'
-import { NamedColorsProvider } from '../../lib/NamedColors/NamedColorsProvider'
 import { green, grey } from '@material-ui/core/colors'
 import { flowBoxContentColorMap } from '../FlowNodeBox'
 import { FlowToolbarProvider, useFlowToolbar } from '../FlowToolbar/FlowToolbarProvider'
 import { NodeCardLabel, NodeCardLabelFlowStateDataScopes } from '../FlowNodes/NodeCardLabel'
 import { NodeCardNote, NodeCardNoteFlowStateDataScopes } from '../FlowNodes/NodeCardNote'
 import { parseHandleId } from '../FlowNodeHelper/parseHandleId'
+import { NamedColorsProvider } from 'named-color-maps'
 import { CustomNodeSelector } from './FlowComponents/CustomNodeSelector'
 
 export interface DesignerFlowStateDataScopes extends FlowStateDataScopes, NodeCardLabelFlowStateDataScopes, NodeCardNoteFlowStateDataScopes {
@@ -88,11 +89,23 @@ export const DesignerEntities: React.ComponentType<{
 
     const {setFlowState, ...history} = useFlowHistoryMaker<DesignerFlowStateDataScopes>(setFlowStateState, flowState)
 
+    const {palette} = useTheme()
+
+    const colorPalette = React.useMemo(() => ({
+        primary: palette.primary,
+        secondary: palette.secondary,
+        error: palette.error,
+        warning: palette.warning,
+        info: palette.info,
+        success: palette.success,
+        background: palette.background,
+    }), [palette])
     console.log(flowState.toJS())
 
     return <NamedColorsProvider
         shadedColors={shadedColors}
         colorMaps={colorMaps}
+        palette={colorPalette}
     >
         <FlowHistoryProvider {...history}>
             <FlowContextProvider<DesignerFlowStateDataScopes>

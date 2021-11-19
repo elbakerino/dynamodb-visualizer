@@ -10,7 +10,7 @@ import IcOpenInNew from '@material-ui/icons/OpenInNew'
 import { Box, Divider } from '@material-ui/core'
 import { IconEmbed } from '../IconEmbed'
 import { IconImg } from '../IconImg'
-import { useNamedColors } from '../../lib/NamedColors/NamedColorsProvider'
+import { useNamedColors } from 'named-color-maps'
 import { handlePreventPaneKeyboardEvent } from '../FlowNodeHelper/handlePreventPaneKeyboardEvent'
 
 export interface NodeCardNoteData extends NodeData {

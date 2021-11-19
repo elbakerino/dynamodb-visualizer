@@ -10,7 +10,7 @@ import IcOpenInNew from '@material-ui/icons/OpenInNew'
 import { calcPxByView, calcPyByView } from '../FlowNodeBox/NodeBoxHelper'
 import { IconImg } from '../IconImg'
 import { IconEmbed } from '../IconEmbed'
-import { useNamedColors } from '../../lib/NamedColors/NamedColorsProvider'
+import { useNamedColors } from 'named-color-maps'
 import { handlePreventPaneKeyboardEvent } from '../FlowNodeHelper/handlePreventPaneKeyboardEvent'
 
 export interface NodeCardLabelData extends NodeData {

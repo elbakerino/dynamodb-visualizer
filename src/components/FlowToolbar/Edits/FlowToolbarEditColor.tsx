@@ -6,7 +6,7 @@ import FormLabel from '@material-ui/core/FormLabel'
 import Switch from '@material-ui/core/Switch'
 import Box from '@material-ui/core/Box'
 import { FlowStateDataScopes } from '../../FlowState/FlowTypes'
-import { useNamedColors } from '../../../lib/NamedColors/NamedColorsProvider'
+import { useNamedColors } from 'named-color-maps'
 import { FlowToolbarEditProps } from '../FlowToolbarEdit'
 
 export const FlowToolbarEditColorBase = <FSD extends FlowStateDataScopes>(

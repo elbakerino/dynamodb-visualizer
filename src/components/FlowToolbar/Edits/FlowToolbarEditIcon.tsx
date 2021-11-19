@@ -10,7 +10,7 @@ import { IconPicker } from '../../IconPicker'
 import IcColorize from '@material-ui/icons/ColorLens'
 import Button from '@material-ui/core/Button'
 import { BlockPicker } from 'react-color'
-import { useNamedColors } from '../../../lib/NamedColors/NamedColorsProvider'
+import { useNamedColors } from 'named-color-maps'
 import useTheme from '@material-ui/core/styles/useTheme'
 
 export const FlowToolbarEditIconBase = <FSD extends FlowStateDataScopes>(
